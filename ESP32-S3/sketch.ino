@@ -301,7 +301,7 @@ public:
     bool liveReconfigureAP();
     bool recoverRTC();
     void smartRecovery();
-    void verifyRelayStates();
+    void verifyRelayStates(bool force = false);
     void performTargetedRecovery();
     void restartAPIfNeeded(bool forceRestart = false);
 private:
@@ -853,14 +853,14 @@ void SelfHealingSystem::performTargetedRecovery() {
     liveReconfigureAP();
     delay(50);
     recoverRTC();
-    verifyRelayStates();
+    verifyRelayStates(true);
     health.wifiFailures = 0;
 }
 
-void SelfHealingSystem::verifyRelayStates() {
+void SelfHealingSystem::verifyRelayStates(bool force) {
     static unsigned long lastVerification = 0;
     unsigned long now = millis();
-    if (!timeHasElapsed(now, lastVerification, 30000)) return;
+    if (!force && !timeHasElapsed(now, lastVerification, 30000)) return;
     lastVerification = now;
     updateScheduleCache();
     for (int i = 0; i < gpioConfig.count; i++) {
@@ -1070,6 +1070,7 @@ const NS=8;
 let relays=[],busy=false;
 let editingRelay = -1;
 let editingInput = null;
+let editSuppressBlur = false;
 
 function escapeHtml(text) {
   const div = document.createElement('div');
@@ -1151,13 +1152,21 @@ function startEditName(relayIdx) {
   input.style.cssText = 'font-size:15px;font-weight:700;padding:2px 6px;border:1px solid #1565C0;border-radius:5px;width:120px;background:#fff;color:#1A1A2E;';
   input.id = 'edit_' + relayIdx;
   
-  input.onblur = () => saveNameEdit(relayIdx, input.value);
+  input.onblur = () => {
+    if (editSuppressBlur) return;
+    saveNameEdit(relayIdx, input.value);
+  };
   input.onkeydown = (e) => {
     if (e.key === 'Enter') {
       e.preventDefault();
+      editSuppressBlur = true;
       saveNameEdit(relayIdx, input.value);
+      editSuppressBlur = false;
     } else if (e.key === 'Escape') {
+      e.preventDefault();
+      editSuppressBlur = true;
       cancelEdit();
+      editSuppressBlur = false;
     }
   };
   
@@ -1174,7 +1183,9 @@ function cancelEdit() {
   if (editingRelay !== -1) {
     const nameSpan = document.getElementById('name_' + editingRelay);
     if (nameSpan) nameSpan.style.display = '';
+    editSuppressBlur = true;
     if (editingInput) editingInput.remove();
+    editSuppressBlur = false;
     editingRelay = -1;
     editingInput = null;
   }
@@ -1193,7 +1204,9 @@ function saveNameEdit(relayIdx, newName) {
     nameSpan.textContent = newName;
     nameSpan.style.display = '';
   }
+  editSuppressBlur = true;
   if (editingInput) editingInput.remove();
+  editSuppressBlur = false;
   editingRelay = -1;
   editingInput = null;
   
@@ -1259,14 +1272,14 @@ function render(){
         html+=`<div class="day${(dayBits&mask)?' on':''}" onclick="toggleDay(${i},${s},${d})">${D[d]}</div>`;
       }
       html+=`</div>
-<div class="sched-section">Days of Month <small style="text-transform:none;color:#90A4AE;font-weight:400">(Empty = All days)</small></div>
+<div class="sched-section">Days of Month</div>
 <div class="mdays" id="mday_${i}_${s}">`;
       for(let d=0;d<31;d++){
         const mask = 1<<d;
         html+=`<div class="mday${(monthDayBits&mask)?' on':''}" onclick="toggleMonthDay(${i},${s},${d})" title="Day ${d+1}">${d+1}</div>`;
       }
       html+=`</div>
-<div class="sched-section">Months of Year <small style="text-transform:none;color:#90A4AE;font-weight:400">(All selected = All months)</small></div>
+<div class="sched-section">Months of Year</div>
 <div class="months" id="mon_${i}_${s}">`;
       for(let m=0;m<12;m++){
         const mask = 1<<m;
@@ -1568,9 +1581,7 @@ function saveWiFi(){
     const btn = document.querySelector('.bsave');
     btn.disabled = true;
     btn.textContent = 'Saving...';
-    const body = {ssid: ssid};
-    const pwVal = document.getElementById('pw').value;
-    if (pwVal.length > 0) body.password = pwVal;
+    const body = {ssid: ssid, password: document.getElementById('pw').value};
     fetch('/api/wifi',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)})
     .then(r=>r.json()).then(d=>{
         btn.disabled = false;
@@ -1871,60 +1882,65 @@ function saveGlobalMode() {
     }).catch(()=>toast('Error', false));
 }
 
+function renderGPIOPins(d) {
+    const globalMode = parseInt(document.getElementById('globalMode').value);
+    const isGlobalMode = (globalMode === 1 || globalMode === 2);
+    const globalModeText = (globalMode === 1) ? 'GLOBAL ACTIVE LOW' : (globalMode === 2) ? 'GLOBAL ACTIVE HIGH' : null;
+    
+    let pinsHtml = '';
+    if(isGlobalMode) {
+        pinsHtml = `<div style="background:#FFF3E0;padding:10px;border-radius:7px;margin-bottom:12px;border-left:4px solid #F9A825">
+            <strong style="color:#E65100">⚠️ Global Mode Active:</strong> ${globalModeText}<br>
+            <small style="color:#BF360C">Individual active level settings are currently overridden. Switch to "Per-Relay Configuration" to use individual settings.</small>
+        </div>`;
+    }
+    
+    for(let i=0; i<d.count; i++) {
+        const activeLow = d.activeLow ? d.activeLow[i] : true;
+        pinsHtml += `<div style="display:flex;align-items:center;gap:10px;padding:10px;border:1px solid #E3E8EF;border-radius:7px;margin-bottom:6px;background:#FAFAFA">
+            <span style="font-weight:700;min-width:60px">Relay ${i+1}</span>
+            <span style="flex:1">GPIO <strong>${d.pins[i]}</strong></span>
+            <span style="flex:1;font-size:12px">Active: <strong>${activeLow ? 'LOW' : 'HIGH'}</strong></span>
+            <button class="btn ${activeLow ? 'bon-b' : 'boff-b'}" 
+                onclick="toggleActiveLow(${i})" 
+                style="padding:5px 10px;font-size:11px" 
+                title="Toggle active level"
+                ${isGlobalMode ? 'disabled' : ''}>
+                ${activeLow ? 'Set HIGH' : 'Set LOW'}
+            </button>
+            <button class="btn boff-b" onclick="deletePin(${i})" style="padding:5px 10px;font-size:11px" title="Remove this relay">&#x1F5D1; Remove</button>
+        </div>`;
+    }
+    if(d.count === 0) pinsHtml += '<div style="color:#90A4AE;text-align:center;padding:20px">No relays configured. Add some using the dropdown above.</div>';
+    if(d.count >= 16) pinsHtml += '<div style="color:#E65100;text-align:center;padding:10px;font-size:12px">Maximum 16 relays reached.</div>';
+    document.getElementById('pins').innerHTML = pinsHtml;
+    
+    const select = document.getElementById('newPin');
+    select.innerHTML = '<option value="">Select GPIO...</option>';
+    const usedPins = new Set(d.pins.slice(0, d.count));
+    d.availablePins.forEach(pin => {
+        if(!usedPins.has(pin)) {
+            select.innerHTML += `<option value="${pin}">GPIO ${pin}</option>`;
+        }
+    });
+    if(select.options.length === 1) {
+        select.innerHTML += '<option value="" disabled>All available pins in use</option>';
+    }
+}
+
 function loadGPIO() {
     fetch('/api/gpio').then(r=>r.json()).then(d=>{
         gpioData = d;
         document.getElementById('relayCount').textContent = d.count;
         
         fetch('/api/gpio/global-mode').then(r=>r.json()).then(data=>{
-    if(data.mode !== undefined) {
-        document.getElementById('globalMode').value = data.mode;
-    }
-       }).catch(()=>{});
-        
-        let pinsHtml = '';
-        const globalMode = parseInt(document.getElementById('globalMode').value);
-        const isGlobalMode = (globalMode === 1 || globalMode === 2);
-        const globalModeText = (globalMode === 1) ? 'GLOBAL ACTIVE LOW' : (globalMode === 2) ? 'GLOBAL ACTIVE HIGH' : null;
-        
-        if(isGlobalMode) {
-            pinsHtml = `<div style="background:#FFF3E0;padding:10px;border-radius:7px;margin-bottom:12px;border-left:4px solid #F9A825">
-                <strong style="color:#E65100">⚠️ Global Mode Active:</strong> ${globalModeText}<br>
-                <small style="color:#BF360C">Individual active level settings are currently overridden. Switch to "Per-Relay Configuration" to use individual settings.</small>
-            </div>`;
-        }
-        
-        for(let i=0; i<d.count; i++) {
-            const activeLow = d.activeLow ? d.activeLow[i] : true;
-            pinsHtml += `<div style="display:flex;align-items:center;gap:10px;padding:10px;border:1px solid #E3E8EF;border-radius:7px;margin-bottom:6px;background:#FAFAFA">
-                <span style="font-weight:700;min-width:60px">Relay ${i+1}</span>
-                <span style="flex:1">GPIO <strong>${d.pins[i]}</strong></span>
-                <span style="flex:1;font-size:12px">Active: <strong>${activeLow ? 'LOW' : 'HIGH'}</strong></span>
-                <button class="btn ${activeLow ? 'bon-b' : 'boff-b'}" 
-                    onclick="toggleActiveLow(${i})" 
-                    style="padding:5px 10px;font-size:11px" 
-                    title="Toggle active level"
-                    ${isGlobalMode ? 'disabled' : ''}>
-                    ${activeLow ? 'Set HIGH' : 'Set LOW'}
-                </button>
-                <button class="btn boff-b" onclick="deletePin(${i})" style="padding:5px 10px;font-size:11px" title="Remove this relay">&#x1F5D1; Remove</button>
-            </div>`;
-        }
-        if(d.count === 0) pinsHtml += '<div style="color:#90A4AE;text-align:center;padding:20px">No relays configured. Add some using the dropdown above.</div>';
-        if(d.count >= 16) pinsHtml += '<div style="color:#E65100;text-align:center;padding:10px;font-size:12px">Maximum 16 relays reached.</div>';
-        document.getElementById('pins').innerHTML = pinsHtml;
-        
-        const select = document.getElementById('newPin');
-        select.innerHTML = '<option value="">Select GPIO...</option>';
-        const usedPins = new Set(d.pins.slice(0, d.count));
-        d.availablePins.forEach(pin => {
-            if(!usedPins.has(pin)) {
-                select.innerHTML += `<option value="${pin}">GPIO ${pin}</option>`;
+            if(data.mode !== undefined) {
+                document.getElementById('globalMode').value = data.mode;
             }
+            renderGPIOPins(d);
+        }).catch(()=>{
+            renderGPIOPins(d);
         });
-        if(select.options.length === 1) {
-            select.innerHTML += '<option value="" disabled>All available pins in use</option>';
-        }
     }).catch(()=>toast('Error loading GPIO config',false));
 }
 
@@ -2846,7 +2862,8 @@ void loop() {
         } else if (timeHasElapsed(now, wifiConnectStart, WIFI_CONNECT_TIMEOUT)) {
             wifiConnecting = false;
             wifiConnected = false;
-            if (wifiReconnectAttempts >= MAX_RECONNECT && !wifiFirstAttempt) {
+            wifiFirstAttempt = false;
+            if (wifiReconnectAttempts >= MAX_RECONNECT) {
                 wifiGiveUpUntil = now + 300000UL;
                 wifiReconnectAttempts = 0;
             }
@@ -2898,9 +2915,17 @@ void loop() {
         if (doSync) {
             tryNTPSync();
         }
-        if (ntpAsyncStage != 0 || ntpAsyncState == NTP_STATE_CONNECTING) {
-            updateNTPSync();
+    } else if (ntpAsyncStage != 0 || ntpAsyncState == NTP_STATE_CONNECTING) {
+        if (ntpAsyncStage == 0 || ntpAsyncStage == 1) {
+            ntpUDP.stop();
         }
+        ntpAsyncStage = 0;
+        ntpAsyncState = NTP_STATE_IDLE;
+        ntpAsyncCurrentServer = ntpServerIndex;
+        ntpRetryCount = 0;
+    }
+    if (ntpAsyncStage != 0 || ntpAsyncState == NTP_STATE_CONNECTING) {
+        updateNTPSync();
     }
     if (timeHasElapsed(now, lastScheduleProcess, SCHEDULE_PROCESS_INTERVAL)) {
         lastScheduleProcess = now;
@@ -3229,12 +3254,12 @@ void handleSaveRelay() {
     int s = 0;
     for (JsonObject sch : schedules) {
         if (s >= 8) break;
-        uint8_t sh = sch["startHour"]   | 0; if (sh > 23) sh = 0;
-        uint8_t sm = sch["startMinute"] | 0; if (sm > 59) sm = 0;
-        uint8_t ss = sch["startSecond"] | 0; if (ss > 59) ss = 0;
-        uint8_t eh = sch["stopHour"]    | 0; if (eh > 23) eh = 0;
-        uint8_t em = sch["stopMinute"]  | 0; if (em > 59) em = 0;
-        uint8_t es = sch["stopSecond"]  | 0; if (es > 59) es = 0;
+        uint8_t sh = sch["startHour"]   | 0; if (sh > 23) sh = 23;
+        uint8_t sm = sch["startMinute"] | 0; if (sm > 59) sm = 59;
+        uint8_t ss = sch["startSecond"] | 0; if (ss > 59) ss = 59;
+        uint8_t eh = sch["stopHour"]    | 0; if (eh > 23) eh = 23;
+        uint8_t em = sch["stopMinute"]  | 0; if (em > 59) em = 59;
+        uint8_t es = sch["stopSecond"]  | 0; if (es > 59) es = 59;
         relayConfigs[relay].schedule.startHour[s]   = sh;
         relayConfigs[relay].schedule.startMinute[s] = sm;
         relayConfigs[relay].schedule.startSecond[s] = ss;
@@ -3384,13 +3409,18 @@ void handleSaveWiFi() {
         bool passChanged = false;
         strncpy(sysConfig.sta_ssid, ssid, 31);
         sysConfig.sta_ssid[31] = '\0';
-        if (doc.containsKey("password") && doc["password"].is<const char*>()) {
-            const char* pw = doc["password"];
-            if (pw && strlen(pw) > 0) {
-                passChanged = (strcmp(sysConfig.sta_password, pw) != 0);
-                strncpy(sysConfig.sta_password, pw, 63);
-                sysConfig.sta_password[63] = '\0';
-            } else if (ssidChanged) {
+        if (doc.containsKey("password")) {
+            if (doc["password"].is<const char*>()) {
+                const char* pw = doc["password"];
+                if (pw && strlen(pw) > 0) {
+                    passChanged = (strcmp(sysConfig.sta_password, pw) != 0);
+                    strncpy(sysConfig.sta_password, pw, 63);
+                    sysConfig.sta_password[63] = '\0';
+                } else {
+                    passChanged = (sysConfig.sta_password[0] != '\0');
+                    sysConfig.sta_password[0] = '\0';
+                }
+            } else {
                 passChanged = (sysConfig.sta_password[0] != '\0');
                 sysConfig.sta_password[0] = '\0';
             }
@@ -3502,30 +3532,47 @@ void handleSaveNTP() {
         server.send(400, "application/json", "{\"success\":false,\"error\":\"Bad JSON\"}");
         return;
     }
-    const char* srv = doc["ntpServer"];
-    if (srv && strlen(srv) > 0 && strlen(srv) < 48) {
+    bool changed = false;
+    if (doc.containsKey("ntpServer")) {
+        const char* srv = doc["ntpServer"];
+        if (!srv || strlen(srv) == 0 || strlen(srv) >= 48) {
+            server.send(400, "application/json", "{\"success\":false,\"error\":\"Invalid NTP server\"}");
+            return;
+        }
         strncpy(sysConfig.ntp_server, srv, 47);
         sysConfig.ntp_server[47] = '\0';
+        changed = true;
+    }
+    if (doc.containsKey("gmtOffset")) {
         int32_t gmt = doc["gmtOffset"] | 0;
-        int32_t dst = doc["daylightOffset"] | 0;
         if (gmt > 50400) gmt = 50400;
         if (gmt < -50400) gmt = -50400;
+        sysConfig.gmt_offset = gmt;
+        changed = true;
+    }
+    if (doc.containsKey("daylightOffset")) {
+        int32_t dst = doc["daylightOffset"] | 0;
         if (dst > 7200) dst = 7200;
         if (dst < -7200) dst = -7200;
-        sysConfig.gmt_offset      = gmt;
         sysConfig.daylight_offset = dst;
-        if (doc.containsKey("syncHours")) {
-            uint8_t h = doc["syncHours"];
-            if (h >= 1 && h <= 24) {
-                extConfig.ntp_sync_hours = h;
-                saveExtConfig();
-            }
-        }
-        saveConfiguration();
-        server.send(200, "application/json", "{\"success\":true}");
-    } else {
-        server.send(400, "application/json", "{\"success\":false,\"error\":\"Invalid NTP server\"}");
+        changed = true;
     }
+    if (doc.containsKey("syncHours")) {
+        uint8_t h = doc["syncHours"];
+        if (h < 1 || h > 24) {
+            server.send(400, "application/json", "{\"success\":false,\"error\":\"syncHours must be 1-24\"}");
+            return;
+        }
+        extConfig.ntp_sync_hours = h;
+        saveExtConfig();
+        changed = true;
+    }
+    if (!changed) {
+        server.send(400, "application/json", "{\"success\":false,\"error\":\"No fields to update\"}");
+        return;
+    }
+    saveConfiguration();
+    server.send(200, "application/json", "{\"success\":true}");
 }
 
 void handleSyncNTP() {
