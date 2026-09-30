@@ -277,7 +277,7 @@ bool          mdnsRestartScheduled  = false;
 // =============================================================================
 static bool     scheduleActiveCache[MAX_RELAYS] = {false};
 static unsigned long lastScheduleCacheUpdate = 0;
-static const unsigned long SCHEDULE_CACHE_INTERVAL = 1000UL;
+static const unsigned long SCHEDULE_CACHE_INTERVAL = 250UL;
 static unsigned long lastScheduleProcess = 0;
 static bool lastRelayOutputs[MAX_RELAYS] = {false};
 static unsigned long lastStateChangeGlobal[MAX_RELAYS] = {0};
@@ -491,7 +491,7 @@ void setWiFiStationEnabled(bool enabled) {
     saveExtConfig();
     if (!enabled) {
         ntpUDP.stop();
-        WiFi.disconnect(true);
+        WiFi.disconnect(false, false);
         wifiConnected = false;
         wifiConnecting = false;
         wifiPausedForScan = false;
@@ -716,7 +716,7 @@ void pauseWiFiForScan() {
     if (wifiConnecting && !wifiConnected && !wifiPausedForScan && extConfig.sta_enabled) {
         wifiPausedForScan = true;
         wifiPauseUntil = millis() + WIFI_PAUSE_DURATION;
-        WiFi.disconnect(true);
+        WiFi.disconnect(false, false);
         delay(100);
         wifiConnecting = false;
         lastScanAttempt = millis();
@@ -1086,10 +1086,7 @@ function load(){
     d.forEach(r=>{
       if(!Array.isArray(r.schedules))r.schedules=[];
       r.schedules=r.schedules.filter(s=>s&&typeof s==='object');
-      r.schedules.forEach(s=>{
-        if(s.monthDays === 0x7FFFFFFF || s.monthDays === 0xFFFFFFFF) s.monthDays = 0;
-      });
-      while(r.schedules.length<NS)r.schedules.push({startHour:0,startMinute:0,startSecond:0,stopHour:0,stopMinute:0,stopSecond:0,enabled:false,days:0x7F,monthDays:0,monthMask:0x0FFF});
+      while(r.schedules.length<NS)r.schedules.push({startHour:0,startMinute:0,startSecond:0,stopHour:0,stopMinute:0,stopSecond:0,enabled:false,days:0x7F,monthDays:0x7FFFFFFF,monthMask:0x0FFF});
     });
     relays=d;render();
   }).catch(()=>toast('Load error',false));
@@ -1106,11 +1103,11 @@ function dayMaskToStr(d){
 }
 
 function monthDayMaskToStr(md){
-  if(md===0) return '';
-  if(md===0xFFFFFFFF) return 'All month days';
-  if(md===0x7FFFFFFF) return '';
+  const v = (md === undefined || md === null) ? 0x7FFFFFFF : (md & 0x7FFFFFFF);
+  if(v === 0) return 'None';
+  if(v === 0x7FFFFFFF) return 'All month days';
   let s='';
-  for(let i=0;i<31;i++) if(md&(1<<i)) s+=(i+1)+',';
+  for(let i=0;i<31;i++) if(v&(1<<i)) s+=(i+1)+',';
   return s.replace(/,$/,'')||'None';
 }
 
@@ -1251,8 +1248,8 @@ function render(){
     for(let s=0;s<NS;s++){
       const sc2=r.schedules[s]||{startHour:0,startMinute:0,startSecond:0,stopHour:0,stopMinute:0,stopSecond:0,enabled:false,days:0x7F,monthDays:0,monthMask:0x0FFF};
       const dayBits = (sc2.days === undefined || sc2.days === null) ? 0x7F : sc2.days;
-      const rawMonthDayBits = (sc2.monthDays === undefined || sc2.monthDays === null) ? 0 : sc2.monthDays;
-      const monthDayBits = (rawMonthDayBits === 0x7FFFFFFF || rawMonthDayBits === 0xFFFFFFFF) ? 0 : rawMonthDayBits;
+      const rawMonthDayBits = (sc2.monthDays === undefined || sc2.monthDays === null) ? 0x7FFFFFFF : sc2.monthDays;
+      const monthDayBits = rawMonthDayBits & 0x7FFFFFFF;
       const monthMask = (sc2.monthMask === undefined || sc2.monthMask === null) ? 0x0FFF : sc2.monthMask;  
       html+=`<div class="si${sc2.enabled?' act':''}" id="si_${i}_${s}">
 <div class="shdr">
@@ -1309,8 +1306,9 @@ function toggleDay(ri,si,dayIdx){
 
 function toggleMonthDay(ri,si,dayIdx){
   const mask = 1<<dayIdx;
-  let cur = relays[ri].schedules[si].monthDays || 0;
-  if(cur === 0x7FFFFFFF || cur === 0xFFFFFFFF) cur = 0;
+  let cur = relays[ri].schedules[si].monthDays;
+  if(cur === undefined || cur === null) cur = 0x7FFFFFFF;
+  cur = cur & 0x7FFFFFFF;
   cur ^= mask;
   relays[ri].schedules[si].monthDays = cur;
   const mdayEl = document.getElementById('mday_'+ri+'_'+si).children[dayIdx];
@@ -2486,7 +2484,7 @@ void beginWiFiConnect() {
     if (wifiGiveUpUntil != 0 && !isTimeReached(millis(), wifiGiveUpUntil)) return;
     if (wifiConnecting) return;
     if (wifiPausedForScan) return;
-    WiFi.disconnect(true);
+    WiFi.disconnect(false, false);
     delay(100);
     wifiReconnectAttempts++;
     if (WiFi.getMode() != WIFI_AP_STA) {
@@ -2744,7 +2742,7 @@ void setup() {
     }
     WiFi.mode(WIFI_AP_STA);
     if (extConfig.sta_enabled && strlen(sysConfig.sta_ssid) > 0) {
-        WiFi.disconnect(true);
+        WiFi.disconnect(false, false);
         delay(100);
         WiFi.begin(sysConfig.sta_ssid, sysConfig.sta_password);
         wifiConnecting = true;
@@ -2986,13 +2984,6 @@ void loadConfiguration() {
     }
     if (!valid) {
         initDefaults();
-    }
-    for (int i = 0; i < MAX_RELAYS; i++) {
-        for (int s = 0; s < 8; s++) {
-            if (relayConfigs[i].schedule.monthDays[s] == 0) {
-                relayConfigs[i].schedule.monthDays[s] = 0x7FFFFFFFUL;
-            }
-        }
     }
     strncpy(ap_ssid, sysConfig.ap_ssid, sizeof(ap_ssid) - 1);
     ap_ssid[sizeof(ap_ssid) - 1] = '\0';
@@ -3280,7 +3271,6 @@ void handleSaveRelay() {
             relayConfigs[relay].schedule.days[s] = DAY_ALL;
         }
         uint32_t rawMonthDays = sch["monthDays"] | 0;
-        if (rawMonthDays == 0) rawMonthDays = 0x7FFFFFFFUL;
         relayConfigs[relay].schedule.monthDays[s] = rawMonthDays & 0x7FFFFFFFUL;
         if (sch.containsKey("monthMask")) {
             relayConfigs[relay].schedule.monthMask[s] = sch["monthMask"].as<uint16_t>() & 0x0FFF;
@@ -3434,7 +3424,7 @@ void handleSaveWiFi() {
         saveConfiguration();
         if (extConfig.sta_enabled && (ssidChanged || passChanged)) {
             wifiPausedForScan = false;
-            WiFi.disconnect(true);
+            WiFi.disconnect(false, false);
             delay(500);
             wifiConnected = false;
             wifiConnecting = true;
