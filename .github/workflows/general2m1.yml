@@ -4,73 +4,74 @@ on:
   workflow_dispatch:
     inputs:
       board:
-        description: 'Select Board'
+        description: 'Board auswaehlen'
         required: true
         type: choice
         options:
-          - esp32:esp32:esp32
-          - esp32:esp32:esp32s3:FlashSize=16M,PSRAM=opi
-          - esp32:esp32:esp32c3
-          - esp32:esp32:esp32s2
-          - esp8266:esp8266:nodemcuv2
-          - esp8266:esp8266:generic
-          - esp8266:esp8266:d1_mini
+          - 'esp8266:esp8266:generic:eesz=4M2M,flash=DIO'
+          - 'esp8266:esp8266:generic:eesz=2M,flash=DIO'
+          - 'esp8266:esp8266:esp8285:eesz=1M512,flash=DIO'
   release:
     types: [published]
 
 jobs:
   build-and-release:
     runs-on: ubuntu-latest
-    
+
     strategy:
       matrix:
-        board: ${{ fromJSON(github.event_name == 'workflow_dispatch' && format('[{{"fqbn":"{0}","name":"{0}"}}]', github.event.inputs.board) || '[{"fqbn":"esp32:esp32:esp32","name":"esp32"},{"fqbn":"esp32:esp32:esp32s3","name":"esp32-s3"},{"fqbn":"esp32:esp32:esp32c3","name":"esp32-c3"},{"fqbn":"esp32:esp32:esp32s2","name":"esp32-s2"},{"fqbn":"esp8266:esp8266:nodemcuv2","name":"esp8266-nodemcuv2"},{"fqbn":"esp8266:esp8266:generic:eesz=2M1M","name":"esp8266-generic2m1"},{"fqbn":"esp8266:esp8266:d1_mini:eesz=2M1M","name":"esp8266-d1-mini"}]') }}
-    
+        board: ${{ fromJSON(github.event_name == 'workflow_dispatch' && format('[{{"fqbn":"{0}","name":"{0}"}}]', github.event.inputs.board) || '[{"fqbn":"esp8266:esp8266:generic:eesz=4M2M,flash=DIO","name":"esp8266-generic-4M2M"},{"fqbn":"esp8266:esp8266:generic:eesz=2M,flash=DIO","name":"esp8266-generic-2M"},{"fqbn":"esp8266:esp8266:esp8285:eesz=1M512,flash=DIO","name":"esp8285-1M512"}]') }}
+
     steps:
     - name: Checkout repository
       uses: actions/checkout@v5
 
     - name: Install Arduino-cli
       run: |
-        # Main | Bash
-        # curl -fsSL https://raw.githubusercontent.com/arduino/arduino-cli/master/install.sh | BINDIR=/usr/local/bin sh
-
-        # Main | Debian
         wget -O arduino-cli.deb https://github.com/arduino/arduino-cli/releases/download/v1.5.1/arduino-cli_1.5.1-1_amd64.deb
         sudo dpkg -i arduino-cli.deb
         sudo apt --fix-broken install -y
         sudo dpkg --configure -a
-        
+
         arduino-cli config init
-        
-        # ESP32 board URL
+
         arduino-cli config add board_manager.additional_urls https://raw.githubusercontent.com/espressif/arduino-esp32/gh-pages/package_esp32_index.json
-        
-        # ESP8266 board URL
         arduino-cli config add board_manager.additional_urls https://arduino.esp8266.com/stable/package_esp8266com_index.json
 
-        # Update core index
         arduino-cli core update-index
-        
-        # Install ESP32 core
         arduino-cli core install esp32:esp32
-        
-        # Install ESP8266 core
         arduino-cli core install esp8266:esp8266
-        
-        # Install libraries
+
         arduino-cli lib install "ArduinoJson"
         arduino-cli lib install "PubSubClient"
-        
-        # Install RTClib (external)
+
         git clone --depth 1 --branch 1.14.1 https://github.com/adafruit/RTClib.git ~/Arduino/libraries/RTClib
 
     - name: Compile for ${{ matrix.board.name }}
       run: |
+        rm -rf firmware
+        mkdir -p firmware
+
+        ORIG_INO=$(ls *.ino | head -1)
+        SKETCH_NAME="${ORIG_INO%.ino}"
+        echo "Original sketch: $SKETCH_NAME"
+
+        mv "$ORIG_INO" arduino.ino
+
         echo "Compiling for ${{ matrix.board.name }} (${{ matrix.board.fqbn }})..."
-        mv *.ino arduino.ino
         arduino-cli compile --fqbn ${{ matrix.board.fqbn }} --clean --output-dir firmware .
-        
+
+        SAFE_NAME=$(echo "${{ matrix.board.fqbn }}" | tr -c 'a-zA-Z0-9._-' '-')
+
+        for f in firmware/arduino.ino.*; do
+          [ -e "$f" ] || continue
+          ext="${f##*.}"
+          mv "$f" "firmware/${SKETCH_NAME}-${SAFE_NAME}.${ext}"
+        done
+
+        echo "---- Firmware-Inhalt ----"
+        ls -la firmware/
+
     - name: Determine release tag
       id: get_tag
       run: |
@@ -87,5 +88,6 @@ jobs:
         tag_name: ${{ steps.get_tag.outputs.tag_name }}
         files: |
           firmware/*.bin
+        overwrite_files: true
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
