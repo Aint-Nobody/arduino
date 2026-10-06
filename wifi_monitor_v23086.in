@@ -119,7 +119,7 @@
 // -----------------------------------------------------------------------
 // Version: 2.30.63      Generiert: 2026-09-29 (ntfy-Anhang Modus 0 "ganze
 //                        Liste" liefert jetzt dasselbe Format wie eine
-//                        reguläre Sicherung, nach eigener Entwickler-
+//                        regulÃ¤re Sicherung, nach eigener Entwickler-
 //                        Dokumentation umgesetzt). Neue Hilfsfunktion
 //                        write_scenario_plaintext(File&, uint64_t) buendelt
 //                        den bisher doppelt vorhandenen Schreibcode aus dem
@@ -920,7 +920,7 @@
 //                        einmal und waren von diesem Bug nicht betroffen.
 // -----------------------------------------------------------------------
 // Version: 2.30.35      Generiert: 2026-09-14 (zwei unabhaengige
-//                        Entwickleraufträge):
+//                        EntwicklerauftrÃ¤ge):
 //                        1) RAM-/Stack-Diagnose um optionale Call-Chain-
 //                        Analyse erweitert (Debug RAM Memory > Taste '3'/'4').
 //                        Rein additiv - die bestehende Diagnose (Free Heap/
@@ -960,7 +960,7 @@
 //                        zusaetzlich (a) ueber den vorhandenen Signalpin
 //                        (inkl. dessen Aktiv-Low-Konfiguration) eine
 //                        einmalige, nicht blockierende Folge von 5 Impulsen
-//                        á 100ms ein/100ms aus ausgegeben, (b) die
+//                        Ã¡ 100ms ein/100ms aus ausgegeben, (b) die
 //                        vorhandene Status-LED unabhaengig vom aktuellen
 //                        Menue-/Betriebszustand in ein deutlich hektischeres
 //                        Blinkmuster (100ms) versetzt, bis das bestehende
@@ -976,7 +976,7 @@
 //                        noetig.
 // -----------------------------------------------------------------------
 // Version: 2.30.34      Generiert: 2026-09-14 (letzter noch offener Punkt
-//                        aus der v2.30.33-Sammel-Änderungsliste: passive
+//                        aus der v2.30.33-Sammel-Ãnderungsliste: passive
 //                        RAM-/Stack-Diagnose, "Hidden Settings > Debug RAM
 //                        Memory", Taste 'r'). Kernprinzip: MESSEN -> mit
 //                        bisherigem Extremwert VERGLEICHEN -> ggf. neuen
@@ -1019,12 +1019,12 @@
 //                        veraendert.
 // -----------------------------------------------------------------------
 // Version: 2.30.33      Generiert: 2026-09-14 (mehrere unabhaengige
-//                        Entwickleraufträge aus einer Sammel-Änderungsliste
+//                        EntwicklerauftrÃ¤ge aus einer Sammel-Ãnderungsliste
 //                        umgesetzt - jeweils rein darstellerisch/strukturell,
 //                        keine Aenderung an Scanner/Parsing/Speicherlayout):
 //                        1) Beacon-Timestamp/TSF: die bisherige High/Low-
 //                        Zerlegung ("<high>*2^32 + <low>") ist entfallen,
-//                        stattdessen "Timestamp/TSF : <64-Bit-Wert> µs" plus
+//                        stattdessen "Timestamp/TSF : <64-Bit-Wert> Âµs" plus
 //                        zweite Zeile "ca. <Tage> Tage HH:MM:SS.mmm". Die
 //                        Byte-24-31-Auswertung/Little-Endian-Zusammensetzung
 //                        ist unveraendert; die Umrechnung erfolgt komplett in
@@ -1065,7 +1065,7 @@
 //                        TEIL der Checkboxen aktiv ist (neue Tri-State-
 //                        Hilfsfunktion chk_tri(), ergaenzt chk()). "[x]" (alle
 //                        aktiv) und "[ ]" (keine aktiv) bleiben wie bisher.
-//                        Noch NICHT umgesetzt aus derselben Änderungsliste:
+//                        Noch NICHT umgesetzt aus derselben Ãnderungsliste:
 //                        die passive RAM-/Stack-Diagnose (Hidden Settings >
 //                        "Debug RAM Memory") - folgt in einer eigenen Version.
 // -----------------------------------------------------------------------
@@ -1198,7 +1198,7 @@
 //                        = derselbe Zahlenwert wie Management-Subtyp 4
 //                        "Probe Request", Data-Subtyp 8 "QoS Data" = derselbe
 //                        wie Management-Subtyp 8 "Beacon"). print_filtered_
-//                        frame() prüfte bisher nur frame_subtype, nicht
+//                        frame() prÃ¼fte bisher nur frame_subtype, nicht
 //                        zusaetzlich frame_type == 0 (Management) - dadurch
 //                        wurde bei jedem Null-Data-Frame faelschlich versucht,
 //                        an der SSID-Byteposition eine SSID zu lesen. Fix:
@@ -2714,7 +2714,7 @@
 //           (settings.cfg, watchlist.cfg, MAC-Tabellen). Globale Variable
 //           show_hidden (false = versteckt, true = sichtbar) toggle mit Taste
 //           h allein. Taste h + Nummer markiert/demarkiert Datei als
-//           geschuetzt. Menü 6 zeigt [PROTECTED] Label und Filterhinweis.
+//           geschuetzt. MenÃ¼ 6 zeigt [PROTECTED] Label und Filterhinweis.
 //           Vor Loesch-Operation: Schutzpruefung mit Fehler wenn protected &&
 //           !show_hidden. protected.txt Verwaltung runtime mit LittleFS.open(w).
 //   2.24.0: GROSSE UMSTELLUNG: SPIFFS -> LittleFS. Die Debug-Analyse der
@@ -2821,38 +2821,38 @@
 //           weiteren Flash-Zugriff. Fallback auf klassische Binaersuche,
 //           falls eine Index-Datei fehlt/nicht erzeugt werden konnte.
 //           Ausserdem: Dateiliste (Menuepunkt 6) von 12 auf 20 Dateien
-//           erweitert (file_list_names[12][32] → [20][32], kostet
+//           erweitert (file_list_names[12][32] â [20][32], kostet
 //           zusaetzliches RAM, ausdruecklich gewuenscht).
-//   2.21.1: STRUKTUR-OPTIMIERUNG - Weitere RAM-Ersparnis durch Feldlöschung:
-//           clientinfo: 29 → 20 Bytes (-31%)
-//             Gelöscht: seq_n (2B, nicht genutzt), ap[6] (6B, redundant), header (1B, nicht genutzt)
-//             BEHALTEN: err, reported (werden für Fehlerlogik gelesen!)
-//           beaconinfo: 51 → 48 Bytes (-6%)
-//             Gelöscht: capa[2] (2B, nicht genutzt), header (1B, nicht genutzt)
-//             BEHALTEN: err, reported (werden für Fehlerlogik gelesen!)
-//           probeinfo: ~114 → ~95 Bytes (-17%)
-//             Gelöscht: seq_n (2B, nicht genutzt), ap[6] (6B, nicht genutzt), header (1B, nicht genutzt)
-//           Ersparnis bei 400 Clients + 90 APs: ~3.9 KB zusätzlich!
+//   2.21.1: STRUKTUR-OPTIMIERUNG - Weitere RAM-Ersparnis durch FeldlÃ¶schung:
+//           clientinfo: 29 â 20 Bytes (-31%)
+//             GelÃ¶scht: seq_n (2B, nicht genutzt), ap[6] (6B, redundant), header (1B, nicht genutzt)
+//             BEHALTEN: err, reported (werden fÃ¼r Fehlerlogik gelesen!)
+//           beaconinfo: 51 â 48 Bytes (-6%)
+//             GelÃ¶scht: capa[2] (2B, nicht genutzt), header (1B, nicht genutzt)
+//             BEHALTEN: err, reported (werden fÃ¼r Fehlerlogik gelesen!)
+//           probeinfo: ~114 â ~95 Bytes (-17%)
+//             GelÃ¶scht: seq_n (2B, nicht genutzt), ap[6] (6B, nicht genutzt), header (1B, nicht genutzt)
+//           Ersparnis bei 400 Clients + 90 APs: ~3.9 KB zusÃ¤tzlich!
 //           Status: v2.21.1 = v2.21.0 + Struktur-Optimierungen
 //   
 //   2.21.0: MAC-Herstellererkennung (Vendor Lookup) - VendorLookup-Klasse integriert:
-//           Taste 'v' in Menü 3a: Toggle für Hersteller-Anzeige (Session-persistent)
+//           Taste 'v' in MenÃ¼ 3a: Toggle fÃ¼r Hersteller-Anzeige (Session-persistent)
 //           On-Demand Lookup beim Rendern (KEIN Batch-Cache zur Speichersicherheit)
 //           Bei Aktivierung: Einspaltige Ansicht mit Herstellernamen hinter dB
 //           AP-Header zeigt: "AP-MAC: ... dB Hersteller: <Name>"
 //           
 //           RAM-OPTIMIERUNG (Punkt 3.1):
-//           - Index-Arrays (indices[], all_matches[]): int → uint16_t (-900 Bytes)
+//           - Index-Arrays (indices[], all_matches[]): int â uint16_t (-900 Bytes)
 //           - MAX_CLIENTS_TRACKED: bleibt 400
 //           
 //           Voraussetzung: /mac_7byte.bin, /mac_6byte.bin, /mac_5byte.bin, /vendors.txt im SPIFFS
-//   2.13.0: Dynamische SSID-Länge, Channel-Filter (Hidden E3),
+//   2.13.0: Dynamische SSID-LÃ¤nge, Channel-Filter (Hidden E3),
 //           Scan-Verweilzeit (Hidden E4), Funktionsdeklarationen-Fix
-//   2.14.0: Multi-AP Header mit SSID anzeigen (S4,7 → "4 (SSID1),7 (SSID2)"),
-//           Hidden Test Function: Shift+A für Auto-Save Trigger
+//   2.14.0: Multi-AP Header mit SSID anzeigen (S4,7 â "4 (SSID1),7 (SSID2)"),
+//           Hidden Test Function: Shift+A fÃ¼r Auto-Save Trigger
 //   2.15.0: NTFY Message Title Header "WiFi-Monitor Liste von [SSID]",
 //           Datei-Kopfzeile mit Sender-SSID + Zeitstempel
-//   2.16.0: Auto-Load Datei beim Neustart (Punkt e → 10),
+//   2.16.0: Auto-Load Datei beim Neustart (Punkt e â 10),
 //           Auto-Load Online-Modus (nicht offline), Auto-Save markiert
 //           geladene Datei als "last loaded"
 //   2.17.2: Taste 'i' in Listen S5/S<n,n,...> (Modus 2/3): blendet Clients
@@ -2931,22 +2931,22 @@
 //           NICHT korrekt erfasst - dafuer waere eine Regel pro Land noetig.
 //   2.17.9: RAM-Optimierung (nicht Paket-basiert, sondern proaktive Stabilisierung):
 //           Compiler meldete nur noch ~5 KB freien RAM. SPIFFS konnte deswegen
-//           beim Boot nicht zuverlässig initialisiert werden.
+//           beim Boot nicht zuverlÃ¤ssig initialisiert werden.
 //   2.18.0: Paket 1 - Bugfixes:
 //           Min/Max RSSI Anzeige + Variablen + Funktionen komplett entfernt
-//           (rssi_trend_threshold bleibt - das ist die Änderungs-Schwelle!).
-//           Auto-Save um 0:00 Uhr: zusätzliche Minutenprüfung (tm_min == 0)
+//           (rssi_trend_threshold bleibt - das ist die Ãnderungs-Schwelle!).
+//           Auto-Save um 0:00 Uhr: zusÃ¤tzliche MinutenprÃ¼fung (tm_min == 0)
 //           um Loop-Speichern zwischen 0:00-0:59 Uhr zu vermeiden.
 //           Age-Zeit Kompaktformat: neue Funktion format_age_compact()
-//           für Anzeige >999s als "Xk" statt vierstellig/fünfstellig.
-//           Menü 3/3a Header-Abstände überarbeitet für bessere Spaltenausrichtung.
+//           fÃ¼r Anzeige >999s als "Xk" statt vierstellig/fÃ¼nfstellig.
+//           MenÃ¼ 3/3a Header-AbstÃ¤nde Ã¼berarbeitet fÃ¼r bessere Spaltenausrichtung.
 //           Massnahmen: prev_shown_rssi[250] von int zu int8_t (-750 Byte),
 //           file_list_names von [16][32] zu [12][28] (-176 Byte), 10x kleine
 //           int-Variablen zu uint8_t (-30 Byte), Char-Arrays reduziert
 //           (notif_text_edit_buf, notif_channel, channel_filter, autoload_*,
 //           notif_ssid_filter) (-110 Byte), min/max_rssi_seen zu int8_t (-6 Byte).
 //           Gesamteinsparung: ~1.1 KB RAM freigegeben. MAX_APS_TRACKED (100) und
-//           MAX_CLIENTS_TRACKED (250) blieben unverändert wie gewünscht.
+//           MAX_CLIENTS_TRACKED (250) blieben unverÃ¤ndert wie gewÃ¼nscht.
 //           Datei-Limit Punkt 6 von 16 auf 12 Dateien reduziert (seltene
 //           Anwendung, der meiste Speicher hat ohnehin nicht so viele Dateien).
 //
@@ -3162,7 +3162,7 @@
 //          wiederholt jetzt die komplette Init-Sequenz aus setup()
 //          (disable -> wifi_set_opmode -> wifi_set_channel -> Callback
 //          setzen -> enable), zusaetzlich nothing_new=0 zurueckgesetzt.
-//          - Fehlende Wagenrueckläufe im Boot-Logo behoben: BUILTIN_LOGO
+//          - Fehlende WagenruecklÃ¤ufe im Boot-Logo behoben: BUILTIN_LOGO
 //          enthielt nur rohe \n zwischen den Zeilen (Treppenstufen-
 //          Effekt). print_logo() fuegt jetzt vor jedem \n ein \r ein,
 //          sowohl fuer /logo.txt als auch das eingebaute Logo.
@@ -3220,7 +3220,7 @@
 //          sowohl in notif_send_now() als auch im neuen sync_ntp_time().
 //          - ntfy: neuer Inhaltsmodus "Alle Access Points der Hauptliste"
 //          (sendet die AP-Liste statt der Client-Liste).
-//          - Drei vom Nutzer lokal geänderte Zeilen uebernommen:
+//          - Drei vom Nutzer lokal geÃ¤nderte Zeilen uebernommen:
 //          User-Agent "Firefly-WiFi-Monitor", Credit-Zeile auf der
 //          Info-Seite exakt angepasst, Hinweis auf Taste E im
 //          Einstellungsmenue auskommentiert (macht die Funktion
@@ -3252,29 +3252,29 @@
 //          BUGFIXES:
 //          - NTP-Scanner-Bug: Nach NTP-Sync komplette Promiscuous Re-Init
 //            (wifi_promiscuous_enable/disable + Kanal setzen + Callback)
-//          - SSID-Bündelung (S+Zahl): Funktioniert wieder korrekt - zeigt
+//          - SSID-BÃ¼ndelung (S+Zahl): Funktioniert wieder korrekt - zeigt
 //            alle APs mit gleicher SSID wie vorgesehen (Roaming-Verfolgung)
-//          - Multi-AP-Auswahl (S+Zahl,Zahl): Nur Clients der gewählten
+//          - Multi-AP-Auswahl (S+Zahl,Zahl): Nur Clients der gewÃ¤hlten
 //            APs, nicht vermischt mit SSID-Logik
 //          - Punkt-3-Format Konsistenz: Alle NTFY-Ausgaben folgen jetzt
 //            exakt dem Terminal-Format (MAC, ch/AP, age, RSSI)
-//          - Refresh-Persistierung: Anzeigemodus bleibt über Aktualisierung
+//          - Refresh-Persistierung: Anzeigemodus bleibt Ã¼ber Aktualisierung
 //            erhalten (Modus 1/2/3 mit Parametern)
 //          FEATURES:
 //          - Zeitzone (UTC-Offset, -12..12) und Daylight Saving Time (DST,
 //            automatische Sommer-/Winterzeit nach EU-Regel): Einstellbar in
-//            Punkt e→9 Taste 5/6, wird auf alle Zeit-Ausgaben angewendet
+//            Punkt eâ9 Taste 5/6, wird auf alle Zeit-Ausgaben angewendet
 //            (Terminal + NTFY)
-//          - Auto-Save täglich: Bei NTP um 00:00 Uhr, sonst 24h-Timer.
+//          - Auto-Save tÃ¤glich: Bei NTP um 00:00 Uhr, sonst 24h-Timer.
 //            Format: Zeitstempel im Dateinamen. Ohne NTP: Clients-APs-Millis
 //          - NTFY Terminal-Export: \"Alle APs\", \"Eine SSID\", \"Multi-SSID\"
 //            nutzen alle jetzt das Terminal-Display-Format
 //   2.13.0: Weitere Features + Deklarationen-Fix:
 //          FEATURES:
-//          - Dynamische SSID-Länge: Berechnet längsten Namen in Liste
+//          - Dynamische SSID-LÃ¤nge: Berechnet lÃ¤ngsten Namen in Liste
 //            (statt feste 32 Zeichen), spart Platz in Ausgabe
 //          - Channel-Filter (Hidden E3): Nutzer kann \"alle\" oder \"1,6,11\"
-//            eingeben, Scanner überspringt nicht-gefilterte Kanäle
+//            eingeben, Scanner Ã¼berspringt nicht-gefilterte KanÃ¤le
 //          - Scan-Verweilzeit (Hidden E4): Millisekunden pro Kanal ein-
 //            stellbar (Standard 100ms, Bereich 10-5000ms)
 //          BUGFIX:
@@ -3319,8 +3319,8 @@
 #include <stdarg.h>
 
 // ============================================================
-// VendorLookup.h – MAC-Herstellererkennung (v2.22.0)
-// EINGEBETTET: Keine separate .h Datei nötig
+// VendorLookup.h â MAC-Herstellererkennung (v2.22.0)
+// EINGEBETTET: Keine separate .h Datei nÃ¶tig
 //
 // NEU 2.22.0 GESCHWINDIGKEITSOPTIMIERUNG:
 // Die drei MAC-Adresslisten (mac_5/6/7byte.bin) bekommen jetzt jeweils
@@ -3801,11 +3801,11 @@ struct VendorCacheEntry {
     uint32_t vendorTextOffset; // Byte-Offset direkt in vendors.txt (NOT Zeilennummer)
 };
 
-// Globale Variablen für Cache-Verwaltung (nur Zeiger + Zaehler, der Datenblock ist dynamisch)
+// Globale Variablen fÃ¼r Cache-Verwaltung (nur Zeiger + Zaehler, der Datenblock ist dynamisch)
 VendorCacheEntry *g_vendorCache = NULL;
 int g_vendorCacheCount = 0;
 const int VENDOR_CACHE_MAX = 50;  // Harte Obergrenze
-const uint32_t VENDOR_CACHE_NOT_FOUND = 0xFFFFFFFF;  // Sentinel für Negativ-Caching
+const uint32_t VENDOR_CACHE_NOT_FOUND = 0xFFFFFFFF;  // Sentinel fÃ¼r Negativ-Caching
 // BUGFIX 2.26.3: Guard-Flag gegen wiederholtes Zuruecksetzen bei jedem
 // Redraw (siehe vendorCache_begin() fuer Details).
 bool g_vendorCacheSessionActive = false;
@@ -3824,10 +3824,10 @@ String readVendorLineAtOffset(uint32_t offset);
 // potenziell divergierende Suchlogik.
 
 // ---------------------------------------------------------------
-// Globale Variablen für Vendor-Anzeige (v2.21.0)
+// Globale Variablen fÃ¼r Vendor-Anzeige (v2.21.0)
 // ---------------------------------------------------------------
-bool show_vendors_in_menu3a = false;  // Session-Flag für Hersteller-Anzeige
-bool show_vendors_in_watchlist = false;  // NEU 2.23.0: Session-Flag für Hersteller-Anzeige in Menue 4 (Watchlist)
+bool show_vendors_in_menu3a = false;  // Session-Flag fÃ¼r Hersteller-Anzeige
+bool show_vendors_in_watchlist = false;  // NEU 2.23.0: Session-Flag fÃ¼r Hersteller-Anzeige in Menue 4 (Watchlist)
 
 // =====================================================================
 // NEU 2.27.1 REQ-4: RUECKKEHR-SIGNALISIERUNG (Menue 4 / Watchlist)
@@ -4106,8 +4106,8 @@ struct beaconinfo
   uint8_t bssid[ETH_MAC_LEN];       // 6 Bytes: AP-MAC
   uint8_t ssid[33];                 // 33 Bytes: SSID
   uint8_t channel;                  // 1 Byte: Kanal (Bit 7 = AP_OPEN_FLAG, siehe oben)
-  int8_t rssi;                      // 1 Byte: Signalstärke
-  uint8_t ssid_len;                 // 1 Byte: SSID Länge
+  int8_t rssi;                      // 1 Byte: SignalstÃ¤rke
+  uint8_t ssid_len;                 // 1 Byte: SSID LÃ¤nge
   uint8_t err;                      // 1 Byte: Error Code (wird gelesen!)
   uint8_t reported;                 // 1 Byte: Reporting Status (wird gelesen!)
 } __attribute__((packed));
@@ -4128,7 +4128,7 @@ struct clientinfo
   uint8_t ap_idx;                    // 1 Byte: Index in aps_known[]
   uint8_t station[ETH_MAC_LEN];     // 6 Bytes: Client-MAC
   uint8_t channel;                  // 1 Byte: WLAN-Kanal
-  int8_t rssi;                      // 1 Byte: Signalstärke
+  int8_t rssi;                      // 1 Byte: SignalstÃ¤rke
   uint8_t err;                      // 1 Byte: Error Code (wird gelesen!)
   uint8_t reported;                 // 1 Byte: Reporting Status (wird gelesen!)
 } __attribute__((packed));
@@ -4391,7 +4391,7 @@ void led_write_digital(bool on);
 void led_write_pwm(int level_0_to_range, uint32_t now_ms);
 void menu_draw();              // zeichnet die Menue-Uebersicht
 
-// NEU 2.21.0: Signal-Pin Funktionen (ähnlich wie LED)
+// NEU 2.21.0: Signal-Pin Funktionen (Ã¤hnlich wie LED)
 void signal_apply_pin_config(); // richtet pinMode() fuer den aktuell konfigurierten Pin ein
 void signal_write_digital(bool on);  // schaltet Signal auf GPIO
 void signal_force_off();  // schaltet das Signal sofort aus
@@ -4627,7 +4627,7 @@ const char* ie_frame_subtype_name(uint8_t ftype, uint8_t fsubtype);  // NEU 2.30
 // memcpy/memcmp (siehe Kommentar bei client_capture_* oben zur Panic-
 // Lehre aus v2.30.9/2.30.10) - das eigentliche Dekodieren+Datei-Schreiben
 // passiert erst danach in menu_periodic() im Hauptloop. Bis zu
-// FRAMETRAP_CLIENT_MAX_PENDING Fallen dürfen gleichzeitig scharf sein (Nutzer-
+// FRAMETRAP_CLIENT_MAX_PENDING Fallen dÃ¼rfen gleichzeitig scharf sein (Nutzer-
 // Vorgabe); dieselbe Zahl dient auch als Puffergroesse zwischen Callback
 // und Verarbeitung (mehr als eine Handvoll gleichzeitiger Faenge sind bei
 // so seltenen Ereignissen praktisch ausgeschlossen).
@@ -4692,7 +4692,7 @@ bool parse_multi_ap_selection(const char *input); // NEU 2.12.0: parst "1,5,7" f
 void menu_enter_ssid_list_multi(); // NEU 2.12.0: zeigt Clients mehrerer gewaehlter APs
 void print_client_cell(int slot, uint64_t now, Print* out = &Serial); // Terminal-Ausgabe Client (NEU 2.28.0: out-Parameter)
 void print_client_cell_ap_mode(int slot, uint8_t *ap_indices, int ap_count, uint64_t now, Print* out = &Serial); // NEU 2.12.0: mit AP-Nummer, NEU 2.28.0: out-Parameter
-int calculate_max_ssid_length(uint8_t *ap_indices, int ap_count); // NEU 2.13.0: dynamische SSID-Länge
+int calculate_max_ssid_length(uint8_t *ap_indices, int ap_count); // NEU 2.13.0: dynamische SSID-LÃ¤nge
 void print_ap_cell(int idx, int ssid_width, bool two_col, uint64_t now, bool show_vendor, Print* out = &Serial); // NEU 2.28.0: out-Parameter fuer ntfy-Datei-Ausgabe
 // NEU 2.17.2: Ignore-Filter (Taste 'i') fuer Modus 2 (S5) und Modus 3 (S<n,n,...>)
 bool client_is_hideable(int slot, uint64_t now); // true = Client hat AP gewechselt oder ist "out"
@@ -4710,11 +4710,11 @@ void print_logo();             // Boot-Logo bzw. Logo-Header (Datei-Override fal
 // verwendet - Arduino generiert automatische Prototypen nur fuer
 // FUNKTIONEN, nicht fuer globale Variablen (gleiche Fehlerklasse wie
 // bei startup_online/show_logo, siehe Kommentar weiter unten).
-// NEU 2.20.12: NTFY Struktur überarbeitet - jeder Parameter isoliert + korrekte Größen
-// Speicherung: NUR bei Taste 's' im Settings-Menü (nicht auto-save!)
-// Buffer-Overflow-Schutz: Alle destmax-Werte stimmen mit Array-Größen überein
+// NEU 2.20.12: NTFY Struktur Ã¼berarbeitet - jeder Parameter isoliert + korrekte GrÃ¶Ãen
+// Speicherung: NUR bei Taste 's' im Settings-MenÃ¼ (nicht auto-save!)
+// Buffer-Overflow-Schutz: Alle destmax-Werte stimmen mit Array-GrÃ¶Ãen Ã¼berein
 bool notif_enabled = false;
-char notif_wifi_ssid[33] = "";        // WLAN-SSID für Versand (max 32 + \0)
+char notif_wifi_ssid[33] = "";        // WLAN-SSID fÃ¼r Versand (max 32 + \0)
 char notif_wifi_pass[65] = "";        // WLAN-Passwort (max 64 + \0)
 char notif_channel[24] = "";          // ntfy.sh Kanalname (max 23 + \0)
 char notif_header_text[33] = "WiFi-Monitor";  // Message-Header/Betreff (max 32 + \0)
@@ -4729,7 +4729,7 @@ bool notif_interval_input_active = false;
 char notif_interval_input_buf[5];
 uint8_t notif_interval_input_len = 0;
 
-char notif_text_edit_buf[96];  // Eingabepuffer für Text-Edit (max 95 + \0)
+char notif_text_edit_buf[96];  // Eingabepuffer fÃ¼r Text-Edit (max 95 + \0)
 uint8_t notif_text_edit_len = 0;
 int notif_edit_target = 0;            // 1=SSID 2=Pass 3=Kanal 4=Header 5=Filter (NEU 2.20.12)
 
@@ -4839,7 +4839,7 @@ static void scenario_reader_reset(ScenarioLineReader &r);
 static bool scenario_reader_read_line(ScenarioLineReader &r, String &line);
 static void scenario_print_file_content(const char *path);
 
-int save_current_lists(const char* filename);  // Speichert APs + Clients, gibt Anzahl zurück
+int save_current_lists(const char* filename);  // Speichert APs + Clients, gibt Anzahl zurÃ¼ck
 int write_scenario_plaintext(File &f, uint64_t now);  // NEU 2.30.63: gemeinsamer Schreibkern fuer save_current_lists() (Klartext-Zweig) und build_notif_attachment() (Modus 0)
 void format_generation_timestamp(char *out, size_t outlen);
 void write_generated_file_header(File &f);
@@ -5008,7 +5008,7 @@ extern time_t ntp_epoch_at_sync;
 extern uint32_t millis_at_ntp_sync;
 
 // Version: 2.30.71      Generiert: 2026-10-03 (Dateiausgabe: Zeilenende und
-//                        Ø-Ueberschriften korrigiert, Spaltenausrichtung
+//                        Ã-Ueberschriften korrigiert, Spaltenausrichtung
 //                        angepasst; kompakte Statistik mit Gruppentrennern;
 //                        Taste r nur in Hintergrundverkehr entfernt;
 //                        FrameTrap-Hinweis gekuerzt; Dateilisten und
@@ -5061,9 +5061,9 @@ int delete_old_empty_aps(uint64_t now);
 // zusaetzlichen RAM-Verbrauch durch eine zweite Kopie zu erzeugen - die
 // eigentliche Verwendung (Punkt 3a, Modus 3) bleibt an ihrer bisherigen
 // Stelle unveraendert, der Speicherort der Deklaration ist dafuer irrelevant.
-uint8_t selected_ap_indices[MAX_APS_TRACKED];  // NEU 2.21.1 OPTIMIZATION: int → uint8_t für Mode 3: Array der gewählten AP-Indizes
-int selected_ap_count = 0;            // für Mode 3: Anzahl der gewählten APs
-#define MAX_CLIENTS_TRACKED 1000   // NEU 2.21.0 OPTIMIZATION: Index-Arrays int → uint16_t
+uint8_t selected_ap_indices[MAX_APS_TRACKED];  // NEU 2.21.1 OPTIMIZATION: int â uint8_t fÃ¼r Mode 3: Array der gewÃ¤hlten AP-Indizes
+int selected_ap_count = 0;            // fÃ¼r Mode 3: Anzahl der gewÃ¤hlten APs
+#define MAX_CLIENTS_TRACKED 1000   // NEU 2.21.0 OPTIMIZATION: Index-Arrays int â uint16_t
                                    // Ersparnis: ~2 KB RAM durch uint16_t Indizierung (sicherer als uint8_t, effizienter als int)
 // Probes werden nicht mehr gespeichert - kein MAX_PROBES_TRACKED mehr noetig
 // ------------------------------------------------
@@ -5189,15 +5189,15 @@ bool status_led_test_state = false; // manueller Test-Toggle (Taste 't' in Hidde
 bool status_led_active_low = false;
 bool led_boot_phase = true;        // true bis das Hauptmenue zum ersten Mal erreicht wird
 
-// NEU 2.21.0: Signalisierungspin (ähnlich wie Status-LED, aber unabhängig)
+// NEU 2.21.0: Signalisierungspin (Ã¤hnlich wie Status-LED, aber unabhÃ¤ngig)
 int signal_pin = -1;                // -1 = deaktiviert (kein Pin konfiguriert)
-bool signal_enabled = true;         // unabhängig von GPIO - kann aktiviert/deaktiviert sein
+bool signal_enabled = true;         // unabhÃ¤ngig von GPIO - kann aktiviert/deaktiviert sein
 bool signal_test_state = false;     // manueller Test-Toggle (Taste 'b' in Hidden Settings)
 bool signal_active_low = false;     // invertierte Logik (optional)
-uint64_t signal_boot_pulse_time_ms = 0;  // Zeitstempel für Boot-Signal (500ms)
+uint64_t signal_boot_pulse_time_ms = 0;  // Zeitstempel fÃ¼r Boot-Signal (500ms)
 bool signal_boot_pulse_sent = false;     // Flag ob Boot-Signal schon gesendet wurde
 
-// NEU 2.20.0 FEATURE 3: GPIO 0 Button (Flash-Button) für Auto-Save
+// NEU 2.20.0 FEATURE 3: GPIO 0 Button (Flash-Button) fÃ¼r Auto-Save
 uint32_t gpio0_last_press_time = 0;  // Debouncing: verhindert mehrfach-Trigger
 bool gpio0_pressed = false;           // Current Button State
 
@@ -5627,9 +5627,9 @@ struct CallChainGuard {
 // (siehe eu_dst_active()). Bezeichnung bewusst englisch/allgemein statt
 // "MESZ", da die Umstellung nicht nur in Europa existiert.
 bool dst_enabled = false;
-bool auto_save_enabled = false;    // Auto-Save täglich um 00:00 Uhr (NTP) oder 24h Timer
+bool auto_save_enabled = false;    // Auto-Save tÃ¤glich um 00:00 Uhr (NTP) oder 24h Timer
 uint32_t auto_save_last_run_millis = 0;  // Zeitstempel des letzten Auto-Save
-uint32_t auto_save_suppressed_until = 0;  // NEU 2.19.0: Speichern für 60s sperren nach erfolgreichem Save
+uint32_t auto_save_suppressed_until = 0;  // NEU 2.19.0: Speichern fÃ¼r 60s sperren nach erfolgreichem Save
 uint32_t auto_save_last_run_day = 0;     // NEU 2.20.2 BUG2: Tages-Timestamp um 0:00 Uhr (verhindert mehrfaches Speichern)
 
 char ntp_text_edit_buf[65];
@@ -6060,7 +6060,7 @@ void led_update()
     return;
   }
 
-  // ONLINE/SCAN-BETRIEB: Alle 4 Sekunden für 30ms aufblitzen
+  // ONLINE/SCAN-BETRIEB: Alle 4 Sekunden fÃ¼r 30ms aufblitzen
   const uint32_t online_period_ms = 4000;  // 4 Sekunden (NEU 2.20.2 BUG3)
   const uint32_t online_flash_duration_ms = 30;  // 30ms Blitz (NEU 2.20.2 BUG3)
   uint32_t phase = now_ms % online_period_ms;
@@ -6069,25 +6069,25 @@ void led_update()
 }
 
 // ===================== FILE PROTECTION Globale Variablen (v2.25.0) =====================
-// Schutz-Liste /protected.txt mit Dateinamen, die nicht angezeigt/gelöscht werden können
+// Schutz-Liste /protected.txt mit Dateinamen, die nicht angezeigt/gelÃ¶scht werden kÃ¶nnen
 // wenn show_hidden == false. Taste 'h' allein schaltet show_hidden um.
-// Taste 'h' + Nummer markiert/demarkiert die Datei als geschützt.
+// Taste 'h' + Nummer markiert/demarkiert die Datei als geschÃ¼tzt.
 #define PROTECTED_FILE "/protected.txt"
 bool show_hidden = false;  // false = versteckte Dateien ausblenden, true = anzeigen
-char protected_list[32][32];  // Cache der geschützten Dateinamen (max 20 wie file_list_names)
-uint8_t protected_count = 0;  // Anzahl der geschützten Dateien
+char protected_list[32][32];  // Cache der geschÃ¼tzten Dateinamen (max 20 wie file_list_names)
+uint8_t protected_count = 0;  // Anzahl der geschÃ¼tzten Dateien
 bool file_protect_mode = false;  // Taste 'h' + Nummer-Modus aktiv
 char file_protect_input_buf[4];
 int file_protect_input_len = 0;
 
 // ===================== FILE PROTECTION Hilfsfunktionen (v2.25.0) =====================
 
-// Liest /protected.txt und ladet die geschützten Dateinamen in protected_list[]
+// Liest /protected.txt und ladet die geschÃ¼tzten Dateinamen in protected_list[]
 void read_protected_list()
 {
   protected_count = 0;
   if (!LittleFS.exists(PROTECTED_FILE)) {
-    return;  // Datei existiert nicht → kein Schutz definiert
+    return;  // Datei existiert nicht â kein Schutz definiert
   }
   
   File f = LittleFS.open(PROTECTED_FILE, "r");
@@ -6104,7 +6104,7 @@ void read_protected_list()
   f.close();
 }
 
-// Prüft, ob ein Dateiname in der Schutzliste steht
+// PrÃ¼ft, ob ein Dateiname in der Schutzliste steht
 bool is_file_protected(const char* filename)
 {
   if (protected_count == 0) return false;
@@ -6117,18 +6117,18 @@ bool is_file_protected(const char* filename)
   return false;
 }
 
-// Togglet Schutzstatus: fügt zur protected.txt hinzu oder entfernt
-// Gibt true zurück wenn jetzt geschützt, false wenn nicht geschützt
+// Togglet Schutzstatus: fÃ¼gt zur protected.txt hinzu oder entfernt
+// Gibt true zurÃ¼ck wenn jetzt geschÃ¼tzt, false wenn nicht geschÃ¼tzt
 bool toggle_file_protection(const char* filename)
 {
-  // Erst prüfen ob Datei bereits geschützt
+  // Erst prÃ¼fen ob Datei bereits geschÃ¼tzt
   bool was_protected = is_file_protected(filename);
   
-  // protected.txt neu schreiben: alle außer filename wenn war_protected, sonst mit filename hinzufügen
+  // protected.txt neu schreiben: alle auÃer filename wenn war_protected, sonst mit filename hinzufÃ¼gen
   File f = LittleFS.open(PROTECTED_FILE, "w");
   if (!f) {
     Serial.println(F("[ERROR] Konnte /protected.txt nicht schreiben!"));
-    return was_protected;  // Zustand unverändert
+    return was_protected;  // Zustand unverÃ¤ndert
   }
   
   for (int i = 0; i < protected_count; i++) {
@@ -6137,7 +6137,7 @@ bool toggle_file_protection(const char* filename)
     }
   }
   
-  // Neu hinzufügen wenn nicht war_protected
+  // Neu hinzufÃ¼gen wenn nicht war_protected
   if (!was_protected) {
     f.println(filename);
   }
@@ -6208,10 +6208,10 @@ void setup() {
   if (show_logo) {
     vt_clear_screen();
     print_logo();
-    delay(3000);  // NEU 2.20.5 BUG4: 3 Sekunden statt länger
+    delay(3000);  // NEU 2.20.5 BUG4: 3 Sekunden statt lÃ¤nger
   }
-  // NEU 2.20.0 FEATURE 3: GPIO 0 Button (Flash-Button) für Auto-Save initialisieren
-  pinMode(0, INPUT_PULLUP);  // GPIO 0 ist internal pull-up, LOW = Taste gedrückt
+  // NEU 2.20.0 FEATURE 3: GPIO 0 Button (Flash-Button) fÃ¼r Auto-Save initialisieren
+  pinMode(0, INPUT_PULLUP);  // GPIO 0 ist internal pull-up, LOW = Taste gedrÃ¼ckt
   gpio0_pressed = false;
   gpio0_last_press_time = 0;
 
@@ -6227,19 +6227,19 @@ void setup() {
   autoload_file_not_found = false;
   
   if (autoload_filename[0] != '\0') {
-    // Prüfe, ob Datei existiert
+    // PrÃ¼fe, ob Datei existiert
     char filepath[50];
     snprintf_P(filepath, sizeof(filepath), PSTR("/%s.txt"), autoload_filename);
-    Serial.printf_P(PSTR(" [AUTO-LOAD] Prüfe auf Datei: '%s'\r\n"), filepath);
+    Serial.printf_P(PSTR(" [AUTO-LOAD] PrÃ¼fe auf Datei: '%s'\r\n"), filepath);
     if (LittleFS.exists(filepath)) {
       // Datei existiert - lade sie
       Serial.printf_P(PSTR(" [AUTO-LOAD] Datei gefunden! Lade '%s'...\r\n"), autoload_filename);
       load_scenario_file(autoload_filename);
       // WICHTIG: NICHT automatisch offline gehen (anders als manuelles Laden)
-      // startup_online bleibt unverändert
+      // startup_online bleibt unverÃ¤ndert
       Serial.printf_P(PSTR(" [AUTO-LOAD] Datei '%s' erfolgreich geladen.\r\n"), autoload_filename);
     } else {
-      // Datei nicht gefunden - Flag setzen für Hauptmenü-Meldung
+      // Datei nicht gefunden - Flag setzen fÃ¼r HauptmenÃ¼-Meldung
       autoload_file_not_found = true;
       Serial.printf_P(PSTR(" [AUTO-LOAD] FEHLER: Datei '%s' nicht gefunden!\r\n"), filepath);
     }
@@ -6336,19 +6336,19 @@ void loop() {
       // menu_enter_http_server()), es gibt also nichts zu scannen.
       if (menu_state != STATE_HTTP_SERVER) {
 
-      // Nächsten erlaubten Kanal finden
+      // NÃ¤chsten erlaubten Kanal finden
       int next_channel = channel + 1;
       if (next_channel >= 15) {
-        break;  // Alle Kanäle fertig (oder alle erlaubten Kanäle)
+        break;  // Alle KanÃ¤le fertig (oder alle erlaubten KanÃ¤le)
       }
       
-      // Überspringe Kanäle, die nicht im Filter liegen
+      // Ãberspringe KanÃ¤le, die nicht im Filter liegen
       while (next_channel < 15 && strcmp(channel_filter, "alle") != 0 && !is_channel_allowed(next_channel)) {
         next_channel++;
       }
       
       if (next_channel >= 15) {
-        break;  // Keine weiteren Kanäle im Filter
+        break;  // Keine weiteren KanÃ¤le im Filter
       }
       
       channel = next_channel;
@@ -6369,13 +6369,13 @@ void loop() {
     signal_update();
 
     // NEU 2.20.0 FEATURE 3: GPIO 0 Button (Flash-Button) Auto-Save Check
-    // Nur wenn Menü aktiv ist (nicht im Sniffing-Betrieb = STATE_LIVE)
+    // Nur wenn MenÃ¼ aktiv ist (nicht im Sniffing-Betrieb = STATE_LIVE)
     if (menu_state != STATE_MENU && menu_state != STATE_LIVE) {
-      bool gpio0_now = digitalRead(0) == LOW;  // LOW = Taste gedrückt (internal pull-up)
+      bool gpio0_now = digitalRead(0) == LOW;  // LOW = Taste gedrÃ¼ckt (internal pull-up)
       uint32_t now_ms = millis();
       
       if (gpio0_now && !gpio0_pressed && (now_ms - gpio0_last_press_time) > 500) {
-        // Button gerade gedrückt (Debouncing: mind. 500ms seit letztem Press)
+        // Button gerade gedrÃ¼ckt (Debouncing: mind. 500ms seit letztem Press)
         gpio0_pressed = true;
         gpio0_last_press_time = now_ms;
         
@@ -6409,7 +6409,7 @@ void loop() {
             Serial.println(F(" [GPIO0] FEHLER beim Speichern!"));
           }
         } else {
-          Serial.println(F("\r\n [GPIO0] Keine Geräte/APs aufgezeichnet - nicht gespeichert."));
+          Serial.println(F("\r\n [GPIO0] Keine GerÃ¤te/APs aufgezeichnet - nicht gespeichert."));
         }
       } else if (!gpio0_now) {
         // Button losgelassen
@@ -6464,7 +6464,7 @@ void loop() {
           // Speichern
           perform_auto_save_without_timestamp();
           
-          // Dateizahl NACHHER prüfen
+          // Dateizahl NACHHER prÃ¼fen
           int files_after = 0;
           {
             Dir dir_count = LittleFS.openDir("/");
@@ -6473,7 +6473,7 @@ void loop() {
           
           // Wenn neue Datei erstellt wurde: 60s sperren
           if (files_after > files_before) {
-            auto_save_suppressed_until = millis() + 60000UL;  // 60 Sekunden Speichern unterdrücken
+            auto_save_suppressed_until = millis() + 60000UL;  // 60 Sekunden Speichern unterdrÃ¼cken
           }
           
           auto_save_last_run_millis = millis();
@@ -6700,11 +6700,11 @@ void print_logo()
 
 // NEU 2.30.32: Gibt die OFFLINE-Warnung und/oder die Channel-Filter-Warnung
 // unmittelbar aus (ohne Leerzeilen, in dieser Reihenfolge). Diese Funktion
-// selbst entscheidet nicht ÜBER die Position innerhalb des Bildschirms -
-// das übernimmt OfflineBannerGuard (siehe unten), der print_offline_banner_now()
+// selbst entscheidet nicht ÃBER die Position innerhalb des Bildschirms -
+// das Ã¼bernimmt OfflineBannerGuard (siehe unten), der print_offline_banner_now()
 // per RAII erst beim Verlassen der jeweiligen Bildschirmfunktion aufruft,
 // sodass beide Meldungen (falls aktiv) immer ganz am Ende der aktuellen
-// Ausgabe stehen, unabhängig davon, wie lang die eigentliche Ausgabe ist.
+// Ausgabe stehen, unabhÃ¤ngig davon, wie lang die eigentliche Ausgabe ist.
 void print_offline_banner_now()
 {
   if (!online_mode) {
@@ -6725,8 +6725,8 @@ void print_offline_banner_now()
   print_channel_filter_warning();
 }
 
-// Kompatibilitäts-Wrapper (falls an anderer Stelle noch unter dem alten Namen
-// aufgerufen) - ruft ausschließlich print_offline_banner_now() auf.
+// KompatibilitÃ¤ts-Wrapper (falls an anderer Stelle noch unter dem alten Namen
+// aufgerufen) - ruft ausschlieÃlich print_offline_banner_now() auf.
 void print_offline_banner()
 {
   print_offline_banner_now();
@@ -6753,15 +6753,15 @@ void print_channel_filter_warning()
 {
   if (strcmp(channel_filter, "alle") != 0) {
     vt_sgr("31");  // Rot
-    Serial.printf_P(PSTR(" ⚠️ WiFi Scan nur Channel(s) %s ⚠️\r\n"), channel_filter);
+    Serial.printf_P(PSTR(" â ï¸ WiFi Scan nur Channel(s) %s â ï¸\r\n"), channel_filter);
     vt_color_reset();
   }
 }
 
-// NEU 2.30.32: RAII-Guard für die OFFLINE-/Channel-Warnung. Eine Instanz wird
+// NEU 2.30.32: RAII-Guard fÃ¼r die OFFLINE-/Channel-Warnung. Eine Instanz wird
 // zu Beginn einer Bildschirmfunktion angelegt (an der Stelle, an der bisher
 // print_offline_banner() direkt aufgerufen wurde); ihr Destruktor feuert beim
-// Verlassen des umschließenden Gültigkeitsbereichs - also am Ende der jeweiligen
+// Verlassen des umschlieÃenden GÃ¼ltigkeitsbereichs - also am Ende der jeweiligen
 // Funktion, auch bei vorzeitigem return - und gibt die Warnzeile(n) dann erst
 // aus. Dadurch stehen sie garantiert ganz unten, ohne dass jede einzelne
 // Bildschirmfunktion einzeln umgebaut werden musste.
@@ -7798,7 +7798,7 @@ void traffic_stats_print_file_table(Print &out)
 {
   if (!traffic_stats_active || traffic_ap_storage == NULL || traffic_client_storage == NULL) return;
   traffic_client_stat *st = (traffic_client_stat*)traffic_client_storage;
-  out.println(F("   #  MAC           AP   Pkt TX   Pkt RX   Bytes TX   Bytes RX   � TX  � RX  Vol-Verh"));
+  out.println(F("   #  MAC           AP   Pkt TX   Pkt RX   Bytes TX   Bytes RX   Ø TX  Ø RX  Vol-Verh"));
   out.println(F("-------------------------------------------------------------------------------"));
   for (int i = 0; i < traffic_stats_client_count; i++) {
     int ci = st[i].last_client_idx;
@@ -8707,7 +8707,7 @@ void promisc_cb(uint8_t *buf, uint16_t len)
 // (menu_state selbst ist bereits weiter oben, direkt nach dem enum
 // MenuState, deklariert - siehe dortigen Kommentar.)
 int ssid_select_cursor_count = 0;    // Anzahl waehlbarer APs beim letzten Zeichnen
-char ssid_input_buf[20];             // Eingabepuffer fuer Zahleneingabe (SSID-Auswahl) - vergrößert für Kommas
+char ssid_input_buf[20];             // Eingabepuffer fuer Zahleneingabe (SSID-Auswahl) - vergrÃ¶Ãert fÃ¼r Kommas
 bool ssid_select_combined = false;   // 'S'-Praefix wurde vor der Zahl eingegeben (Punkt 3a)
 int ssid_input_len = 0;
 // NEU 2.17.5: 'd'-Praefix wurde vor der Zahl eingegeben (Punkt 3, gezielt
@@ -8717,15 +8717,15 @@ bool ssid_select_delete_mode = false;
 // Beacon-Frame-Rohanalyse des gewaehlten APs)
 bool ssid_select_analyze_mode = false;
 
-// NEU 2.12.0: Modus-Verfolgung für Punkt 3b (Anzeigeliste)
+// NEU 2.12.0: Modus-Verfolgung fÃ¼r Punkt 3b (Anzeigeliste)
 //   1 = einzelner AP (nur Clients dieses APs)
-//   2 = SSID-Bündelung (alle APs mit gleicher SSID)
+//   2 = SSID-BÃ¼ndelung (alle APs mit gleicher SSID)
 //   3 = Multi-AP (kommagetrennte APs, z.B. s1,5,7)
 int current_list_mode = 0;
-int current_list_ap_index = -1;      // für Mode 1: welcher AP wird angezeigt
-char ssid_list_combined_ssid[33] = ""; // für Mode 2: die betroffene SSID
+int current_list_ap_index = -1;      // fÃ¼r Mode 1: welcher AP wird angezeigt
+char ssid_list_combined_ssid[33] = ""; // fÃ¼r Mode 2: die betroffene SSID
 
-bool ssid_list_combined = false;         // DEPRECATED aber behalten für Kompatibilität
+bool ssid_list_combined = false;         // DEPRECATED aber behalten fÃ¼r KompatibilitÃ¤t
 uint32_t last_list_refresh_time = 0; // fuer Auto-Refresh
 
 // NEU 2.17.2: Ignore-Filter (Taste 'i'), nur relevant fuer Modus 2 (S5) und
@@ -8779,8 +8779,8 @@ int cleanup_age_threshold = 0;
 char save_filename_buf[25];
 int save_filename_len = 0;
 
-// NEU 2.17.9: RAM-Opt: [16][32]=512 → [12][28]=336 Byte, spart 176 Byte
-char file_list_names[32][32];  // NEU 2.22.0: 12 → 20 Dateien (kostet zusaetzliches RAM, gewuenscht); [32] fuer 24-char-Namen + ".txt" + Null-Terminator
+// NEU 2.17.9: RAM-Opt: [16][32]=512 â [12][28]=336 Byte, spart 176 Byte
+char file_list_names[32][32];  // NEU 2.22.0: 12 â 20 Dateien (kostet zusaetzliches RAM, gewuenscht); [32] fuer 24-char-Namen + ".txt" + Null-Terminator
 uint8_t file_list_count = 0;  // NEU 2.17.9: RAM-Optimierung
 char file_input_buf[6];
 int file_input_len = 0;
@@ -8845,7 +8845,7 @@ void menu_init()
   // NEU 2.17.6: Bootphase der Status-LED endet hier - das Hauptmenue ist
   // jetzt erreicht.
   led_boot_phase = false;
-  // NEU 2.21.0: Boot-Signal (500ms aktiv) auslösen
+  // NEU 2.21.0: Boot-Signal (500ms aktiv) auslÃ¶sen
   signal_boot_pulse();
   menu_draw();
 }
@@ -8862,7 +8862,7 @@ void menu_draw()
   // NEU 2.20.10 BUG10: print_channel_filter_warning() entfernt (wird bereits in print_offline_banner() aufgerufen!)
   Serial.println(F(" 1  Standardausgabe (Return = Liste)"));
   Serial.println(F(" 2  Funkverkehr gezielt untersuchen (Filter-Untermenue)"));
-  Serial.println(F(" 3  Alle SSID mit Geräteanzahl anzeigen"));
+  Serial.println(F(" 3  Alle SSID mit GerÃ¤teanzahl anzeigen"));
   Serial.println(F(" 4  MAC-Adress-Watchlist"));
   Serial.println(F(" 5  Aktuelle Scanliste im Flash speichern"));
   Serial.println(F(" 6  Flashinhalt anzeigen/laden/loeschen"));
@@ -8880,10 +8880,10 @@ void menu_draw()
     Serial.printf_P(PSTR(" b  Hintergrundverkehr anzeigen (%s)\r\n"), durbuf);
   }
   Serial.println();
-  Serial.printf_P(PSTR(" Aktuell registriert: %d Geräte, %d Access Points\r\n"), clients_known_count, aps_known_live_count());
+  Serial.printf_P(PSTR(" Aktuell registriert: %d GerÃ¤te, %d Access Points\r\n"), clients_known_count, aps_known_live_count());
   // NEU 2.16.0: Auto-Load Error-Meldung anzeigen
   if (autoload_file_not_found) {
-    Serial.println(F(" ⚠ Auto-load Datei wurde nicht gefunden!"));
+    Serial.println(F(" â  Auto-load Datei wurde nicht gefunden!"));
   }
   Serial.println(F("-------------------------------------------------------"));
   Serial.println(F(" ESC/Backspace jederzeit zurueck."));
@@ -9418,13 +9418,13 @@ void menu_enter_hidden_settings()
   Serial.println(F(" Hidden Settings"));
   Serial.println(F("======================================================="));
   Serial.printf_P(PSTR(" 1) Boot-Logo anzeigen: %s\r\n"), show_logo ? "An" : "Aus");
-  Serial.printf_P(PSTR(" 2) Auto-Save täglich (um 00:00 Uhr): %s\r\n"), auto_save_enabled ? "An" : "Aus");
+  Serial.printf_P(PSTR(" 2) Auto-Save tÃ¤glich (um 00:00 Uhr): %s\r\n"), auto_save_enabled ? "An" : "Aus");
   Serial.printf_P(PSTR(" 3) Channel-Filter: %s\r\n"), channel_filter);
   Serial.printf_P(PSTR(" 4) Scan-Verweilzeit pro Kanal: %u ms\r\n"), channel_dwell_ms);
   // NEU 2.17.6: Status-LED GPIO-Pin
   if (status_led_pin >= 0) {
     Serial.printf_P(PSTR(" 5) Status-LED GPIO-Pin: %d\r\n"), status_led_pin);
-    // NEU 2.17.7: Polarität - viele Onboard-LEDs sind aktiv-LOW verdrahtet
+    // NEU 2.17.7: PolaritÃ¤t - viele Onboard-LEDs sind aktiv-LOW verdrahtet
     Serial.printf_P(PSTR(" 6) Status-LED Polaritaet: %s\r\n"),
                    status_led_active_low ? "invertiert (LOW=an)" : "normal (HIGH=an)");
   } else {
@@ -9447,7 +9447,7 @@ void menu_enter_hidden_settings()
   Serial.printf_P(PSTR(" r) Debug RAM Memory >>   [%s]\r\n"), ram_debug.enabled ? "Analyse EIN" : "Analyse AUS");
   Serial.printf_P(PSTR(" k) Szenario-Kompression: %s\r\n"), scenario_compression_enabled ? "EIN" : "AUS");
   Serial.println(F("-------------------------------------------------------"));
-  Serial.println(F(" Änderungen werden sofort gespeichert."));
+  Serial.println(F(" Ãnderungen werden sofort gespeichert."));
 //  Serial.println(F(" Taste 3/4/9 = Wert eingeben."));
   Serial.println(F(" Taste t/b = Test LED/Signal Toggle"));
   // NEU 2.30.49: Taste C/P (Listenueberlauf-Test) entfernt - Tests
@@ -9588,7 +9588,7 @@ void perform_factory_reset()
   led_write_digital(false);
   status_led_pin = -1;
   status_led_active_low = false;
-  // NEU 2.21.0: Signalisierungspin zurücksetzen
+  // NEU 2.21.0: Signalisierungspin zurÃ¼cksetzen
   signal_force_off();
   signal_pin = -1;
   signal_enabled = true;
@@ -9676,7 +9676,7 @@ void menu_enter_notif_settings()
   }
   Serial.println(F(" 9) Jetzt einmalig senden (Test)"));
   Serial.println(F("-------------------------------------------------------"));
-  // NEU 2.20.12: Klar machen, dass Änderungen nur im RAM sind bis 's' gedrückt wird
+  // NEU 2.20.12: Klar machen, dass Ãnderungen nur im RAM sind bis 's' gedrÃ¼ckt wird
   Serial.println(F(" Alle Aenderungen sind zuerst nur im RAM (fett gedruckt)!"));
   Serial.println(F(" Taste s = alle Einstellungen dauerhaft speichern"));
   Serial.println(F(" (nur dann wird in Flash geschrieben)"));
@@ -10310,7 +10310,7 @@ int build_notif_attachment()
   // NEU 2.28.0: "Von:" zeigt jetzt den konfigurierten Message-Header-Text
   // (Punkt 6 im Benachrichtigungsmenue) statt der WLAN-SSID.
   // NEU 2.30.63, ZURUECKGENOMMEN in 2.30.64: kurzzeitig nur fuer die Modi
-  // 1/2/3 geschrieben, in der Annahme, load_scenario_file() bräuchte fuer
+  // 1/2/3 geschrieben, in der Annahme, load_scenario_file() brÃ¤uchte fuer
   // Modus 0 eine Datei OHNE fuehrende Zusatzzeilen. Das war unnoetig
   // vorsichtig: der Loader liest zeilenweise nach Praefix ("DEVICE: ",
   // "BEACON: ", "# SETTINGS", "key=val") und ueberspringt jede nicht
@@ -10363,7 +10363,7 @@ int build_notif_attachment()
     filter_copy[127] = '\0';
 
     // NEU 2.12.0: Alle SSID-Filter auf einmal in einer Liste sammeln
-    // statt separaten Sektion für jede SSID
+    // statt separaten Sektion fÃ¼r jede SSID
     // NEU 2.21.0 OPTIMIZATION (Punkt 3.1): int zu uint16_t
     // BUGFIX 2.30.10: all_matches[]/ap_matches[] (unten, in der Schleife)
     // jetzt auf malloc()/free() umgestellt - siehe Kommentar beim
@@ -10504,7 +10504,7 @@ bool notif_send_now(const char* file_path)
         Serial.println(F(" Benachrichtigung: Anhangsdatei konnte nicht geoeffnet werden."));
       } else {
         size_t filesize = f.size();
-        // NEU 2.15.0: Title Header mit Absender-SSID hinzufügen
+        // NEU 2.15.0: Title Header mit Absender-SSID hinzufÃ¼gen
         client.printf_P(PSTR("PUT /%s HTTP/1.1\r\n"), notif_channel);
         client.print(F("Host: ntfy.sh\r\n"));
         client.print(F("User-Agent: Firefly-WiFi-Monitor\r\n"));
@@ -10513,9 +10513,9 @@ bool notif_send_now(const char* file_path)
         // NEU 2.28.0: Dateiname aus Message-Header + Listentyp statt fest "liste.txt"
         // NEU 2.30.64: von 48 auf 56 vergroessert - das neue Schema
         // "YYMMDD_HHMMSS_[Name].txt" ist mit 13+1+32+4+1=51 Byte im
-        // ungünstigsten Fall (voll ausgeschöpfter 32-Zeichen-Name) laenger
+        // ungÃ¼nstigsten Fall (voll ausgeschÃ¶pfter 32-Zeichen-Name) laenger
         // als das alte "[Name]_[Typ].txt" (max. 32+1+5+4+1=43 Byte).
-        // NEU 2.30.65: von 56 auf 60 vergroessert - ungünstigster Fall (NTP,
+        // NEU 2.30.65: von 56 auf 60 vergroessert - ungÃ¼nstigster Fall (NTP,
         // Modus 2, 32-Zeichen-Name): 13+1+32+6+4+1 = 57 Byte.
         char notif_filename[64];
         if (file_path) { const char *base=strrchr(file_path,'/'); base=base?base+1:file_path; strncpy(notif_filename,base,sizeof(notif_filename)-1); notif_filename[sizeof(notif_filename)-1]='\0'; }
@@ -10669,7 +10669,7 @@ void menu_enter_info()
     unsigned sketch_free = (unsigned)ESP.getFreeSketchSpace();
     unsigned sketch_partition_total = sketch_used + sketch_free;
     
-    // NEU 2.20.9 BUG9: Validierung - sketch_free darf nicht größer als sketch_partition_total sein
+    // NEU 2.20.9 BUG9: Validierung - sketch_free darf nicht grÃ¶Ãer als sketch_partition_total sein
     if (sketch_free > sketch_partition_total) sketch_free = 0;
     
     int sketch_pct_free = (sketch_partition_total > 0) ? (int)((100.0 * sketch_free) / sketch_partition_total + 0.5) : 0;
@@ -10680,7 +10680,7 @@ void menu_enter_info()
     unsigned fs_used = fs_info.usedBytes;
     unsigned fs_free = fs_total - fs_used;
     
-    // NEU 2.20.9 BUG9: Validierung - fs_free darf nicht größer als fs_total sein
+    // NEU 2.20.9 BUG9: Validierung - fs_free darf nicht grÃ¶Ãer als fs_total sein
     if (fs_free > fs_total) fs_free = 0;
     
     int fs_pct_free = (fs_total > 0) ? (int)((100.0 * fs_free) / fs_total + 0.5) : 0;
@@ -10729,9 +10729,9 @@ void menu_enter_info()
     Dir dircount = LittleFS.openDir("/");
     while (dircount.next()) file_count++;
     
-    // NEU 2.20.10 BUG10: Max Scan Kapazitäten anzeigen (in v2211 Optimization wieder hinzugefügt)
+    // NEU 2.20.10 BUG10: Max Scan KapazitÃ¤ten anzeigen (in v2211 Optimization wieder hinzugefÃ¼gt)
     Serial.printf_P(PSTR("  Max Scan: Clients=%d APs=%d\r\n"), MAX_CLIENTS_TRACKED, MAX_APS_TRACKED);
-    Serial.printf_P(PSTR("  Programmgröße:           %s Byte\r\n"), format_number_with_dots(sketch_used));
+    Serial.printf_P(PSTR("  ProgrammgrÃ¶Ãe:           %s Byte\r\n"), format_number_with_dots(sketch_used));
     Serial.printf_P(PSTR("  Gespeicherte Dateien: %d   %s Byte\r\n"), file_count, format_number_with_dots(fs_used));
   }
   Serial.println(F("-------------------------------------------------------"));
@@ -10847,7 +10847,7 @@ void menu_enter_ssid_list_multi()
   vendorCache_begin();
 
   if (selected_ap_count <= 0 || selected_ap_count > MAX_APS_TRACKED) {
-    Serial.println(F(" Fehler: Keine APs gewählt."));
+    Serial.println(F(" Fehler: Keine APs gewÃ¤hlt."));
     return;
   }
 
@@ -10892,7 +10892,7 @@ void menu_enter_ssid_list_multi()
 
   Serial.println(F("======================================================="));
   Serial.printf_P(PSTR(" %d Geraete aus %d APs:\r\n"), match_count, selected_ap_count);
-  // NEU 2.14.0: Zeige SSID für jeden AP
+  // NEU 2.14.0: Zeige SSID fÃ¼r jeden AP
   Serial.print(F(" "));
   for (int i = 0; i < selected_ap_count; i++) {
     if (i > 0) Serial.print(F(","));
@@ -10900,7 +10900,7 @@ void menu_enter_ssid_list_multi()
     if (ap_idx >= 0 && ap_idx < aps_known_count && !ap_slot_free(ap_idx)) {
       Serial.printf_P(PSTR("%d (%s)"), ap_idx, (const char*)aps_known[ap_idx].ssid);
     } else {
-      Serial.printf_P(PSTR("%d"), ap_idx);  // Fallback falls Index ungültig
+      Serial.printf_P(PSTR("%d"), ap_idx);  // Fallback falls Index ungÃ¼ltig
     }
   }
   Serial.println();
@@ -10978,7 +10978,7 @@ int calculate_max_ssid_length(uint8_t *ap_indices, int ap_count)
       if (len > max_len) max_len = len;
     }
   } else {
-    // Nur gewählte APs durchsuchen
+    // Nur gewÃ¤hlte APs durchsuchen
     for (int k = 0; k < ap_count; k++) {
       int ap_idx = ap_indices[k];
       if (ap_idx >= 0 && ap_idx < aps_known_count && !ap_slot_free(ap_idx)) {
@@ -10997,12 +10997,12 @@ int calculate_max_ssid_length(uint8_t *ap_indices, int ap_count)
 }
 
 // NEU 2.13.0: Prueft ob ein Kanal im aktiven Filter liegt
-// Wenn channel_filter == "alle", sind alle Kanäle erlaubt
-// Wenn z.B. "1,6,11", nur diese Kanäle
+// Wenn channel_filter == "alle", sind alle KanÃ¤le erlaubt
+// Wenn z.B. "1,6,11", nur diese KanÃ¤le
 bool is_channel_allowed(int channel)
 {
   if (strcmp(channel_filter, "alle") == 0) {
-    return true;  // Alle Kanäle erlaubt
+    return true;  // Alle KanÃ¤le erlaubt
   }
   
   // Parse kommagetrennte Liste
@@ -11224,7 +11224,7 @@ void menu_enter_ssid_select()
 
   // DYNAMISCHER HEADER-BLOCK
   if (two_col) {
-    // Linke Header-Hälfte - mit 2 Leerzeichen zwischen ch und dB
+    // Linke Header-HÃ¤lfte - mit 2 Leerzeichen zwischen ch und dB
     char h_buf[96];
     int h_len = snprintf_P(h_buf, sizeof(h_buf), PSTR(" # [%-*.*s] %6s %2s  %s"),
                          ssid_width_left, ssid_width_left, "SSID", "Ger", "ch", "dB");
@@ -11232,11 +11232,11 @@ void menu_enter_ssid_select()
     Serial.print(h_buf);
     Serial.print(F(" "));
     
-    // Rechte Header-Hälfte
+    // Rechte Header-HÃ¤lfte
     Serial.printf_P(PSTR(" # [%-*.*s] %6s %2s  %s\r\n"),
                   ssid_width_right, ssid_width_right, "SSID", "Ger", "ch", "dB");
     
-    // Trennlinie - um 2 Zeichen verlängert (wegen zusätzlicher Leerzeichen im Header)
+    // Trennlinie - um 2 Zeichen verlÃ¤ngert (wegen zusÃ¤tzlicher Leerzeichen im Header)
     int line_length = (3 + 1 + ssid_width_left + 1 + 1 + 6 + 1 + 2 + 2 + 2) + 1 + 
                       (3 + 1 + ssid_width_right + 1 + 1 + 6 + 1 + 2 + 2 + 2);
     for (int i = 0; i < line_length; i++) Serial.print(F("-"));
@@ -12248,8 +12248,8 @@ const char* ap_sort_field_name(ApSortField f)
 // mehr am Ende von menu_enter_ssid_list()/_combined()/menu_enter_watchlist()
 // aufgerufen (das haette denselben Effekt gehabt!), sondern ausschliesslich
 // an den echten Austrittspunkten (menu_go_back() sowie globaler ESC-Handler).
-// Initialisiert Cache beim ECHTEN Eintritt in Menü 3a/4 (startet leer, 0
-// Einträge) - bei einem Redraw waehrend laufender Sitzung: No-Op.
+// Initialisiert Cache beim ECHTEN Eintritt in MenÃ¼ 3a/4 (startet leer, 0
+// EintrÃ¤ge) - bei einem Redraw waehrend laufender Sitzung: No-Op.
 void vendorCache_begin()
 {
   if (g_vendorCacheSessionActive) {
@@ -12263,7 +12263,7 @@ void vendorCache_begin()
   g_vendorCacheSessionActive = true;
 }
 
-// Gibt Cache-Speicher frei beim ECHTEN Austritt aus Menü 3a/4 (aufgerufen
+// Gibt Cache-Speicher frei beim ECHTEN Austritt aus MenÃ¼ 3a/4 (aufgerufen
 // aus menu_go_back() und dem globalen ESC-Handler, NICHT mehr aus den
 // menu_enter_*()-Funktionen selbst).
 void vendorCache_end()
@@ -12307,11 +12307,11 @@ int vendorCache_lookup(uint8_t *mac, uint32_t &outOffset)
   return -1;  // Cache-Miss
 }
 
-// Fügt Eintrag zu Cache hinzu (oder tut nichts, wenn bereits voll)
+// FÃ¼gt Eintrag zu Cache hinzu (oder tut nichts, wenn bereits voll)
 void vendorCache_add_entry(uint8_t *mac, uint32_t offset)
 {
   if (g_vendorCacheCount >= VENDOR_CACHE_MAX) {
-    return;  // Cache voll, kein weiteres Hinzufügen
+    return;  // Cache voll, kein weiteres HinzufÃ¼gen
   }
   
   // Dynamisches Wachstum: in 8er-Schritten realloc, um Fragmentierung zu reduzieren
@@ -12328,14 +12328,14 @@ void vendorCache_add_entry(uint8_t *mac, uint32_t offset)
     return;  // Allokation fehlgeschlagen
   }
   
-  // Neuen Eintrag anhängen
+  // Neuen Eintrag anhÃ¤ngen
   memcpy(g_vendorCache[g_vendorCacheCount].mac, mac, 6);
   g_vendorCache[g_vendorCacheCount].vendorTextOffset = offset;
   g_vendorCacheCount++;
 }
 
 // Liest eine Zeile direkt aus vendors.txt bei bekanntem Byte-Offset (Cache-Treffer-Fast-Path)
-// Öffnet die Datei, springt zum Offset, liest bis Newline, trimmt und gibt String zurück.
+// Ãffnet die Datei, springt zum Offset, liest bis Newline, trimmt und gibt String zurÃ¼ck.
 String readVendorLineAtOffset(uint32_t offset)
 {
   File f = LittleFS.open("/vendors.txt", "r");
@@ -12365,7 +12365,7 @@ String readVendorLineAtOffset(uint32_t offset)
   return line.length() > 0 ? line : F("---");
 }
 
-// Wrapper für Vendor-Lookup mit Cache-Integration
+// Wrapper fÃ¼r Vendor-Lookup mit Cache-Integration
 // Nutzt Cache wenn vorhanden, sonst normale getManufacturer()-Suche
 // BUGFIX 2.26.1: nutzt jetzt den ECHTEN Byte-Offset aus getManufacturer()
 // (Referenzparameter) statt einer Dummy-0, die beim naechsten Cache-Treffer
@@ -12396,9 +12396,9 @@ String vendorCache_lookup_or_search(uint8_t *mac)
     return readVendorLineAtOffset(cachedOffset);
   }
   
-  // Cache-Miss (cacheResult == -1): normale Suche durchführen, dabei
+  // Cache-Miss (cacheResult == -1): normale Suche durchfÃ¼hren, dabei
   // Byte-Offset per Referenz mit abgreifen (getManufacturer ist String-
-  // basiert, daher müssen wir die MAC in String-Format konvertieren)
+  // basiert, daher mÃ¼ssen wir die MAC in String-Format konvertieren)
   char macstr[13];
   snprintf_P(macstr, sizeof(macstr), PSTR("%02x%02x%02x%02x%02x%02x"),
            mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
@@ -12869,7 +12869,7 @@ void print_ap_cell(int idx, int ssid_width, bool two_col, uint64_t now, bool sho
     // restore_sgr uebergeben wurde - bei einer STALEN Zeile (restore_sgr=
     // "90") "restauriert" print_mac() bewusst auf Grau statt komplett
     // zurueckzusetzen, in der Erwartung, dass die aufrufende Stelle danach
-    // noch selbst zurücksetzt (genau wie print_client_cell()/
+    // noch selbst zurÃ¼cksetzt (genau wie print_client_cell()/
     // print_client_cell_ap_mode() es schon tun). print_ap_cell() tat das
     // bisher NICHT - die Grau-Faerbung "leckte" dadurch in die naechste
     // Zeile, wenn print_mac() als letztes auf einer stalen Zeile lief. Jetzt
@@ -12888,7 +12888,7 @@ void print_ap_cell(int idx, int ssid_width, bool two_col, uint64_t now, bool sho
   // BUGFIX 2.27.3: Diese Schleife kann bei langen Listen sehr teuer werden -
   // client_is_hideable() ruft intern find_freshest_entry_for_station() auf,
   // eine WEITERE komplette Schleife ueber clients_known_count. Fuer einen AP
-  // mit z.B. 45 von 362 Geraeten sind das ca. 45*362 ≈ 16.300 Vergleiche,
+  // mit z.B. 45 von 362 Geraeten sind das ca. 45*362 â 16.300 Vergleiche,
   // OHNE jedes yield() dazwischen. register_beacon() wird aus dem
   // WLAN-Stack heraus per wifi_set_promiscuous_rx_cb() aufgerufen und
   // braucht regelmaessig Gelegenheit, sich einzuklinken - bleibt der Code
@@ -12926,8 +12926,8 @@ void print_ap_cell(int idx, int ssid_width, bool two_col, uint64_t now, bool sho
   }
   
   // Schreibe die Spalten direkt: Gesamte Ger-Spalte (%6s), Kanal (%2d), RSSI
-  // %6s macht dev_str (z.B. "6/0", "33/10") rechtsbündig in 6 Zeichen Breite
-  // Das ergibt die benötigten Abstände zwischen den Spalten
+  // %6s macht dev_str (z.B. "6/0", "33/10") rechtsbÃ¼ndig in 6 Zeichen Breite
+  // Das ergibt die benÃ¶tigten AbstÃ¤nde zwischen den Spalten
   // NEU 2.29.8: AP_CHANNEL_MASK, da Bit 7 jetzt das Offen-Flag sein kann
   len += snprintf_P(buf + len, sizeof(buf) - len, PSTR(" %6s %2d %d"),
                   dev_str, bi.channel & AP_CHANNEL_MASK, bi.rssi);
@@ -12937,7 +12937,7 @@ void print_ap_cell(int idx, int ssid_width, bool two_col, uint64_t now, bool sho
   out->print(buf);
   if (to_console && stale) vt_color_reset();
   
-  // Im einspaltigem Modus: Age + MAC-Adresse anhängen
+  // Im einspaltigem Modus: Age + MAC-Adresse anhÃ¤ngen
   // NEU 2.27.1 REQ-3: Age-Spalte zwischen dB und MAC eingefuegt (nur hier,
   // im zweispaltigen Modus bleibt es wie bisher ohne MAC/Age - kein Platz).
   // Nutzt dieselbe format_age_field()-Funktion wie Menue 3a/4 fuer
@@ -13070,7 +13070,7 @@ void menu_enter_ssid_list(int ap_index)
   Serial.printf_P(PSTR(" RSSI-Trend-Schwelle: %d dB (t=aendern)\r\n"), rssi_trend_threshold);
   Serial.printf_P(PSTR(" Ignoriere AP-Wechsel/Out: %s (i=toggle)\r\n"), list_hide_inactive ? "EIN" : "AUS");
   Serial.printf_P(PSTR(" Aktualisierung: %ds (+ = +5s, - = -5s)\r\n"), list_refresh_sec);
-  // NEU 2.21.0: Vendor-Info zur Hilfe hinzufügen
+  // NEU 2.21.0: Vendor-Info zur Hilfe hinzufÃ¼gen
   Serial.printf_P(PSTR(" Hersteller anzeigen: %s (v=toggle)\r\n"), show_vendors_in_menu3a ? "EIN" : "AUS");
   // NEU 2.30.6: Hinweis auf Client-Frame-Analyse (nur Modus 1 - die Nummern
   // vor jeder Zeile unten sind der echte clients_known-Array-Index).
@@ -13162,7 +13162,7 @@ void menu_enter_ssid_list(int ap_index)
 void menu_enter_ssid_list_combined(int seed_ap_index)
 {
   menu_state = STATE_SSID_LIST;
-  current_list_mode = 2;  // Modus 2 = SSID-Bündelung (alle APs mit gleicher SSID)
+  current_list_mode = 2;  // Modus 2 = SSID-BÃ¼ndelung (alle APs mit gleicher SSID)
   ssid_list_combined = true;
   led_force_off();  // NEU 2.17.6: zeitkritisch (lange Listenausgabe) - Status-LED aus
   vt_clear_screen();
@@ -13313,13 +13313,13 @@ void redraw_ssid_list()
     // Modus 1: einzelner AP
     menu_enter_ssid_list(current_list_ap_index);
   } else if (current_list_mode == 2) {
-    // Modus 2: SSID-Bündelung (alle APs mit gleicher SSID)
+    // Modus 2: SSID-BÃ¼ndelung (alle APs mit gleicher SSID)
     menu_enter_ssid_list_combined(current_list_ap_index);
   } else if (current_list_mode == 3) {
-    // Modus 3: Multi-AP (selected_ap_indices[] ist noch gültig)
+    // Modus 3: Multi-AP (selected_ap_indices[] ist noch gÃ¼ltig)
     menu_enter_ssid_list_multi();
   }
-  // Fallback für unbekannte Modi (sollte nicht vorkommen)
+  // Fallback fÃ¼r unbekannte Modi (sollte nicht vorkommen)
 }
 
 // =====================================================================
@@ -14272,8 +14272,8 @@ void menu_enter_watchlist()
     // Sichtung stammt.
     watchlist_sighting sighting = find_freshest_watchlist_sighting(watchlist[i].mac, now);
     if (! sighting.found) {
-      // NEU 2.19.0: Formatierung "(noch out)" für nie gesehene Geräte
-      // NEU 2.20.3 BUG8: Beschreibung auch anzeigen wenn Gerät nie gesehen
+      // NEU 2.19.0: Formatierung "(noch out)" fÃ¼r nie gesehene GerÃ¤te
+      // NEU 2.20.3 BUG8: Beschreibung auch anzeigen wenn GerÃ¤t nie gesehen
       // BUGFIX 2.27.1: "%2d" statt "%d", damit beide Zweige gleich lang sind
       // (Grundlage fuer die Hersteller-Ausrichtung).
       // BUGFIX 2.27.2: auf Wunsch kompakter gemacht - kein zusaetzliches
@@ -14285,7 +14285,7 @@ void menu_enter_watchlist()
       print_mac(watchlist[i].mac, NULL);
       Serial.printf_P(PSTR(" (noch out) %-12.12s"), watchlist[i].desc);
     } else {
-      // Format: "# MAC ch Age -db Beschreibung" (rechtsbündig)
+      // Format: "# MAC ch Age -db Beschreibung" (rechtsbÃ¼ndig)
       // BUGFIX 2.27.1: "%2d" statt "%d" - ein 1-stelliger Index (0-9) erzeugte
       // eine 1 Zeichen kuerzere Zeile als ein 2-stelliger (10-31, MAX_WATCHLIST
       // = 32), wodurch die Hersteller-Spalte je nach Eintragsnummer wanderte.
@@ -14430,7 +14430,7 @@ void format_uptime_ddhhmmss(char *out, size_t outlen)
 // Schreibt die aktuellen Listen (Clients + APs) als Textdatei ins Flash
 // NEU 2.12.0: Auto-Save mit Timestamp (mit NTP)
 // Generiert Dateinamen wie "autosave_260731_001307.txt" (YYMMDD, seit 2.30.65)
-// (Bindestriche → Unterstriche, weil SPIFFS Bindestriche nicht gut verträgt)
+// (Bindestriche â Unterstriche, weil SPIFFS Bindestriche nicht gut vertrÃ¤gt)
 void perform_auto_save_with_timestamp()
 {
   if (!ntp_synced) return;
@@ -14440,7 +14440,7 @@ void perform_auto_save_with_timestamp()
   struct tm* timeinfo = localtime(&tz_now);
   
   char filename[50];
-  // WICHTIG: OHNE .txt - wird von save_current_lists hinzugefügt!
+  // WICHTIG: OHNE .txt - wird von save_current_lists hinzugefÃ¼gt!
   snprintf_P(filename, sizeof(filename), PSTR("autosave_%02d%02d%02d_%02d%02d%02d"),
     timeinfo->tm_year % 100, timeinfo->tm_mon + 1, timeinfo->tm_mday,
     timeinfo->tm_hour, timeinfo->tm_min, timeinfo->tm_sec);
@@ -14460,14 +14460,14 @@ void perform_auto_save_with_timestamp()
 
 // NEU 2.12.0: Auto-Save ohne Timestamp (ohne NTP)
 // Generiert Dateinamen wie "autosave_123_45_00134502" (Clients-APs-ddhhmmss)
-// .txt wird von save_current_lists hinzugefügt!
+// .txt wird von save_current_lists hinzugefÃ¼gt!
 void perform_auto_save_without_timestamp()
 {
   char filename[50];
   // NEU 2.30.65: millis() -> ddhhmmss (Muster "autosave_<Clients>_<APs>_..." unveraendert)
   char uptime[9];
   format_uptime_ddhhmmss(uptime, sizeof(uptime));
-  // WICHTIG: OHNE .txt - wird von save_current_lists hinzugefügt!
+  // WICHTIG: OHNE .txt - wird von save_current_lists hinzugefÃ¼gt!
   snprintf_P(filename, sizeof(filename), PSTR("autosave_%d_%d_%s"),
     clients_known_count, aps_known_live_count(), uptime);
   
@@ -14986,7 +14986,7 @@ bool load_scenario_file(const char* filename)
 {
   led_force_off();  // NEU 2.17.6: zeitkritisch (Dateitransfer/-lesen) - Status-LED aus
   char path[40];
-  snprintf_P(path, sizeof(path), PSTR("/%s.txt"), filename);  // WICHTIG: .txt anhängen!
+  snprintf_P(path, sizeof(path), PSTR("/%s.txt"), filename);  // WICHTIG: .txt anhÃ¤ngen!
   File f = LittleFS.open(path, "r");
   if (!f) {
     Serial.println(F(" Fehler: Datei konnte nicht geoeffnet werden."));
@@ -15417,7 +15417,7 @@ void menu_enter_file_list()
   file_load_mode = false;
   file_send_mode = false;
   file_view_waiting = false;
-  file_protect_mode = false;  // NEU 2.25.0: File Protection Mode zurücksetzen
+  file_protect_mode = false;  // NEU 2.25.0: File Protection Mode zurÃ¼cksetzen
   file_protect_input_len = 0;
   
   vt_clear_screen();
@@ -15450,15 +15450,15 @@ void menu_enter_file_list()
       fn = fn.substring(1);  // LittleFS liefert (wie zuvor SPIFFS) oft "/name.txt" statt "name.txt"
     }
     
-    // NEU 2.25.0: Prüfe ob Datei geschützt und ausgeblendet werden soll
+    // NEU 2.25.0: PrÃ¼fe ob Datei geschÃ¼tzt und ausgeblendet werden soll
     bool protected_flag = is_file_protected(fn.c_str());
     if (protected_flag && !show_hidden) {
-      continue;  // Überspringe diese Datei wenn geschützt und verborgen
+      continue;  // Ãberspringe diese Datei wenn geschÃ¼tzt und verborgen
     }
     
-    fn.toCharArray(file_list_names[file_list_count], 32);  // NEU 2.20.0: 28 → 32 für volle Array-Größe!
+    fn.toCharArray(file_list_names[file_list_count], 32);  // NEU 2.20.0: 28 â 32 fÃ¼r volle Array-GrÃ¶Ãe!
     
-    // NEU 2.25.0: Zeige [PROTECTED] Label wenn Datei geschützt
+    // NEU 2.25.0: Zeige [PROTECTED] Label wenn Datei geschÃ¼tzt
     char display_name[64]; strncpy(display_name,fn.c_str(),sizeof(display_name)-1); display_name[sizeof(display_name)-1]=0;
     size_t dnlen=strlen(display_name);
     if(dnlen>=4 && strcmp(display_name+dnlen-4,".txt")==0) display_name[dnlen-4]='\0';
@@ -16878,7 +16878,7 @@ void menu_handle_serial()
               menu_start_beacon_capture(idx);
               break;
             } else if (ssid_select_combined) {
-              // Unterscheide zwischen "S5" (SSID-Bündelung) und "S1,5,7" (Multi-AP)
+              // Unterscheide zwischen "S5" (SSID-BÃ¼ndelung) und "S1,5,7" (Multi-AP)
               if (strchr(ssid_input_buf, ',')) {
                 // Multi-AP-Modus: kommagetrennte Zahlen
                 // Parse und rufe neue Funktion auf
@@ -16889,7 +16889,7 @@ void menu_handle_serial()
                   Serial.print(F(" Auswahl: "));
                 }
               } else {
-                // SSID-Bündelungs-Modus: einzelne Zahl
+                // SSID-BÃ¼ndelungs-Modus: einzelne Zahl
                 int idx = atoi(ssid_input_buf);
                 menu_enter_ssid_list_combined(idx);
               }
@@ -17026,7 +17026,7 @@ void menu_handle_serial()
             redraw_ssid_list();
           } else if (c == 'i' && current_list_mode >= 1) {
             // NEU 2.17.2: Ignore-Filter in allen Varianten (1/2/3)
-            // NEU 2.20.0 FEATURE 2: auch in Var.1 verfügbar
+            // NEU 2.20.0 FEATURE 2: auch in Var.1 verfÃ¼gbar
             list_hide_inactive = !list_hide_inactive;
             redraw_ssid_list();
           } else if (c == 'v') {
@@ -17162,7 +17162,7 @@ void menu_handle_serial()
           Serial.print(F(" > "));
           ntp_text_edit_len = 0;
           ntp_text_edit_buf[0] = '\0';
-          ntp_edit_target = 7;  // Marker für Auto-Load Dateiname
+          ntp_edit_target = 7;  // Marker fÃ¼r Auto-Load Dateiname
         } else if (c == 'c' || c == 'C') {
           // NEU 2.30.5: Taste c: AP-Modus (fuer Punkt 7)
           menu_enter_apmode_settings();
@@ -17248,7 +17248,7 @@ void menu_handle_serial()
           } else if (c == '8') {
             // NEU 2.20.9 BUG6: Punkt 8 = SSID-Filter (war Punkt 7, nur bei Mode 1/2)
             if (notif_content_mode == 1 || notif_content_mode == 2) {
-              menu_enter_notif_text_edit(5);  // target=5 für SSID-Filter
+              menu_enter_notif_text_edit(5);  // target=5 fÃ¼r SSID-Filter
             }
           } else if (c == '9') {
             // NEU 2.20.9 BUG6: Punkt 9 = Senden (war Punkt 8)
@@ -17263,19 +17263,19 @@ void menu_handle_serial()
       case STATE_NOTIF_TEXT_EDIT:
         if (c == 13) {
           Serial.println();
-          // NEU 2.20.5 BUG5: notif_edit_target == 4 für Header hinzugefügt
-          // NEU 2.20.9 BUG6: notif_edit_target == 5 für SSID-Filter (war fallback)
+          // NEU 2.20.5 BUG5: notif_edit_target == 4 fÃ¼r Header hinzugefÃ¼gt
+          // NEU 2.20.9 BUG6: notif_edit_target == 5 fÃ¼r SSID-Filter (war fallback)
           // NEU 2.20.12 MAJOR FIX: 
-          // 1. destmax MUSS mit Array-Größe übereinstimmen (nicht "gefühlte" Größe!)
+          // 1. destmax MUSS mit Array-GrÃ¶Ãe Ã¼bereinstimmen (nicht "gefÃ¼hlte" GrÃ¶Ãe!)
           // 2. save_all_settings() entfernt (wird nur bei Taste 's' aufgerufen)
-          // 3. Kein Buffer-Overflow mehr möglich
+          // 3. Kein Buffer-Overflow mehr mÃ¶glich
           
           char* dest = (notif_edit_target == 1) ? notif_wifi_ssid :
                        (notif_edit_target == 2) ? notif_wifi_pass :
                        (notif_edit_target == 3) ? notif_channel :
                        (notif_edit_target == 4) ? notif_header_text : notif_ssid_filter;
           
-          // NEU 2.20.12: KORREKTE destmax-Werte (Feld-Größe - 1 für \0)
+          // NEU 2.20.12: KORREKTE destmax-Werte (Feld-GrÃ¶Ãe - 1 fÃ¼r \0)
           int destmax = (notif_edit_target == 1) ? 33 :      // notif_wifi_ssid[33]
                         (notif_edit_target == 2) ? 65 :      // notif_wifi_pass[65]
                         (notif_edit_target == 3) ? 24 :      // notif_channel[24]
@@ -17283,10 +17283,10 @@ void menu_handle_serial()
           
           strncpy(dest, notif_text_edit_buf, destmax - 1);
           dest[destmax - 1] = '\0';
-          // NEU 2.20.12: Speichern nur bei Taste 's' im NTFY Settings Menü!
+          // NEU 2.20.12: Speichern nur bei Taste 's' im NTFY Settings MenÃ¼!
           menu_enter_notif_settings();
         } else if ((unsigned char)c >= 32 && (unsigned char)c < 127 && c != '=') {
-          // NEU 2.20.12: Input-Limit 95 (96-1 für \0) um Buffer-Overflow zu vermeiden
+          // NEU 2.20.12: Input-Limit 95 (96-1 fÃ¼r \0) um Buffer-Overflow zu vermeiden
           if (notif_text_edit_len < 95) {
             notif_text_edit_buf[notif_text_edit_len] = c;
             notif_text_edit_len++;
@@ -17305,7 +17305,7 @@ void menu_handle_serial()
           Serial.print(F(" > "));
           ntp_text_edit_len = 0;
           ntp_text_edit_buf[0] = '\0';
-          ntp_edit_target = 11;  // Marker für ADC-Kalibrierung
+          ntp_edit_target = 11;  // Marker fÃ¼r ADC-Kalibrierung
         } else if (c == 's') {
           save_all_settings();
         }
@@ -17365,7 +17365,7 @@ void menu_handle_serial()
           Serial.print(F(" > "));
           ntp_text_edit_len = 0;
           ntp_text_edit_buf[0] = '\0';
-          ntp_edit_target = 9;  // Marker für Zeitzone
+          ntp_edit_target = 9;  // Marker fÃ¼r Zeitzone
         } else if (c == '6') {
           // NEU 2.17.8: Daylight Saving Time (automatische Sommer-/
           // Winterzeit) an/aus - ersetzt das alte manuelle MEZ/MESZ-Toggle
@@ -17382,7 +17382,7 @@ void menu_handle_serial()
           Serial.println();
           if (ntp_edit_target == 5) {
             // NEU 2.13.0: Channel-Filter speichern
-            // NEU 2.20.6 BUG2: Wenn nichts/Null eingegeben → "alle" (nicht leer!)
+            // NEU 2.20.6 BUG2: Wenn nichts/Null eingegeben â "alle" (nicht leer!)
             if (ntp_text_edit_len == 0 || strcmp(ntp_text_edit_buf, "0") == 0 || strcmp(ntp_text_edit_buf, "") == 0) {
               strcpy(channel_filter, "alle");
             } else {
@@ -17557,7 +17557,7 @@ void menu_handle_serial()
           save_single_setting("show_logo", show_logo ? 1 : 0);
           menu_enter_hidden_settings();
         } else if (c == '2') {
-          // NEU 2.12.0: Auto-Save täglich Toggle
+          // NEU 2.12.0: Auto-Save tÃ¤glich Toggle
           auto_save_enabled = !auto_save_enabled;
           save_single_setting("auto_save_enabled", auto_save_enabled ? 1 : 0);
           menu_enter_hidden_settings();
@@ -17568,7 +17568,7 @@ void menu_handle_serial()
           Serial.print(F(" > "));
           ntp_text_edit_len = 0;
           ntp_text_edit_buf[0] = '\0';
-          ntp_edit_target = 5;  // Marker für Channel-Filter
+          ntp_edit_target = 5;  // Marker fÃ¼r Channel-Filter
         } else if (c == '4') {
           // NEU 2.13.0: Scan-Verweilzeit eingeben
           menu_state = STATE_NTP_TEXT_EDIT;
@@ -17576,7 +17576,7 @@ void menu_handle_serial()
           Serial.print(F(" > "));
           ntp_text_edit_len = 0;
           ntp_text_edit_buf[0] = '\0';
-          ntp_edit_target = 6;  // Marker für Dwell-Zeit
+          ntp_edit_target = 6;  // Marker fÃ¼r Dwell-Zeit
         } else if (c == '5') {
           // NEU 2.17.6: Status-LED GPIO-Pin eingeben
           menu_state = STATE_NTP_TEXT_EDIT;
@@ -17585,7 +17585,7 @@ void menu_handle_serial()
           Serial.print(F(" > "));
           ntp_text_edit_len = 0;
           ntp_text_edit_buf[0] = '\0';
-          ntp_edit_target = 8;  // Marker für Status-LED-Pin
+          ntp_edit_target = 8;  // Marker fÃ¼r Status-LED-Pin
         } else if (c == '6' && status_led_pin >= 0) {
           // NEU 2.17.7: LED-Polaritaet umschalten (aktiv-LOW Onboard-LEDs)
           status_led_active_low = !status_led_active_low;
@@ -17601,7 +17601,7 @@ void menu_handle_serial()
           Serial.print(F(" > "));
           ntp_text_edit_len = 0;
           ntp_text_edit_buf[0] = '\0';
-          ntp_edit_target = 10;  // Marker für Signal-PIN
+          ntp_edit_target = 10;  // Marker fÃ¼r Signal-PIN
         } else if (c == 's' || c == 'S') {
           // NEU 2.21.0: Signal aktiviert/deaktiviert Toggle
           if (signal_pin >= 0) {
@@ -17633,7 +17633,7 @@ void menu_handle_serial()
           // NEU 2.30.34: Taste r: Debug RAM Memory (passive RAM-/Stack-Diagnose)
           menu_enter_ram_debug();
         } else if (c == 't') {
-          // NEU 2.19.0: Test LED Toggle (vereinfacht, ohne Polarität)
+          // NEU 2.19.0: Test LED Toggle (vereinfacht, ohne PolaritÃ¤t)
           if (status_led_pin >= 0) {
             status_led_test_state = !status_led_test_state;
             led_write_digital(status_led_test_state);
@@ -17656,15 +17656,15 @@ void menu_handle_serial()
           }
           Serial.print(F(" > "));
         } else if (c == 'A') {
-          // NEU 2.14.0 HIDDEN: Shift+A → Auto-Save TEST Funktion
-          // Triggert den Auto-Save Prozess sofort, als würde gerade 00:00 Uhr passiert
+          // NEU 2.14.0 HIDDEN: Shift+A â Auto-Save TEST Funktion
+          // Triggert den Auto-Save Prozess sofort, als wÃ¼rde gerade 00:00 Uhr passiert
           // Versteckte Funktion zur Test ohne bis Mitternacht/24h zu warten
           Serial.println(F("\r\n [AUTO-SAVE TEST] Triggere Auto-Save jetzt..."));
           perform_auto_save_with_timestamp();
           // Aktualisiere timestamp, damit nicht sofort wieder getriggert wird
           auto_save_last_run_millis = millis();
           Serial.println(F(" [AUTO-SAVE TEST] Fertig. Datei sollte jetzt in Punkt 6 sichtbar sein."));
-          delay(1000);  // kurze Pause für Lesbarkeit
+          delay(1000);  // kurze Pause fÃ¼r Lesbarkeit
           menu_enter_hidden_settings();
         }
         break;
@@ -17700,12 +17700,12 @@ void menu_handle_serial()
         } else if (c == 13) {
           Serial.println();
           if (strcmp(factory_reset_input_buf, "ja") == 0) {
-            // Neustart bestätigt!
+            // Neustart bestÃ¤tigt!
             Serial.println(F("\r\n========================================================"));
             Serial.println(F(" Neustart in 2 Sekunden..."));
             Serial.println(F("========================================================"));
             delay(2000);
-            ESP.restart();  // Neustart auslösen - kehrt nie zurück
+            ESP.restart();  // Neustart auslÃ¶sen - kehrt nie zurÃ¼ck
           } else {
             Serial.println(F(" Abgebrochen (falsches Bestaetigungswort - geben Sie 'ja' ein)."));
             menu_enter_hidden_settings();
@@ -17742,7 +17742,7 @@ void menu_handle_serial()
         }
         // NEU 2.25.0: File Protection - Taste 'h' mit zwei Funktionen
         if (c == 'h' && file_input_len == 0 && !file_delete_mode && !file_load_mode && !file_protect_mode && !file_send_mode) {
-          // 'h' allein gedrückt → starte file_protect_mode (wartet auf Ziffer oder Enter)
+          // 'h' allein gedrÃ¼ckt â starte file_protect_mode (wartet auf Ziffer oder Enter)
           file_protect_mode = true;
           file_protect_input_len = 0;
           Serial.print(F("h"));
@@ -17772,7 +17772,7 @@ void menu_handle_serial()
           
           // NEU 2.25.0: Handle file_protect_mode (h allein oder h + Nummer)
           if (file_protect_mode) {
-            // Sonderfall: nur 'h' + Enter ohne Nummer → toggle show_hidden
+            // Sonderfall: nur 'h' + Enter ohne Nummer â toggle show_hidden
             if (file_protect_input_len == 0) {
               show_hidden = !show_hidden;
               if (show_hidden) {
@@ -17781,7 +17781,7 @@ void menu_handle_serial()
                 Serial.println(F(" [OK] Geschuetzte Dateien sind nun verborgen"));
               }
             } else {
-              // 'h' + Nummer + Enter → toggle Schutzstatus der Datei
+              // 'h' + Nummer + Enter â toggle Schutzstatus der Datei
               int idx = atoi(file_protect_input_buf);
               if (idx >= 0 && idx < file_list_count) {
                 bool now_protected = toggle_file_protection(file_list_names[idx]);
@@ -17806,7 +17806,7 @@ void menu_handle_serial()
               char path[40];
               snprintf_P(path, sizeof(path), PSTR("/%s"), file_list_names[idx]);
               if (file_delete_mode) {
-                // NEU 2.25.0: Prüfe Schutzstatus vor dem Löschen
+                // NEU 2.25.0: PrÃ¼fe Schutzstatus vor dem LÃ¶schen
                 // NEU 2.29.6 BUGFIX: "&& !show_hidden" entfernt - show_hidden
                 // steuert nur, ob geschuetzte Dateien in der Liste SICHTBAR
                 // sind (siehe Filter oben), hat aber nichts mit dem Loesch-
