@@ -16,6 +16,9 @@ on:
   release:
     types: [published]
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -25,116 +28,231 @@ jobs:
         board: ${{ fromJSON(github.event_name == 'workflow_dispatch' && format('[{{"fqbn":"{0}"}}]', github.event.inputs.board) || '[{"fqbn":"esp8266:esp8266:generic:eesz=4M2M"},{"fqbn":"esp8266:esp8266:generic:eesz=4M1M"},{"fqbn":"esp8266:esp8266:generic:eesz=1M512"},{"fqbn":"esp8266:esp8266:esp8285:eesz=1M512"}]') }}
 
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v5
+      - name: Checkout repository
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
 
-    - name: Install Arduino-cli
-      run: |
-        wget -O arduino-cli.deb https://github.com/arduino/arduino-cli/releases/download/v1.5.1/arduino-cli_1.5.1-1_amd64.deb
-        sudo dpkg -i arduino-cli.deb
-        sudo apt --fix-broken install -y
-        sudo dpkg --configure -a
+      - name: Install Arduino-cli
+        shell: bash
+        run: |
+          set -euo pipefail
 
-        arduino-cli config init
-        arduino-cli config add board_manager.additional_urls https://arduino.esp8266.com/stable/package_esp8266com_index.json
+          wget -O arduino-cli.deb \
+            https://github.com/arduino/arduino-cli/releases/download/v1.5.1/arduino-cli_1.5.1-1_amd64.deb
 
-        arduino-cli core update-index
-        arduino-cli core install esp8266:esp8266
+          sudo dpkg -i arduino-cli.deb
+          sudo apt --fix-broken install -y
+          sudo dpkg --configure -a
 
-        arduino-cli lib install "ArduinoJson"
-        arduino-cli lib install "PubSubClient"
+          arduino-cli config init
+          arduino-cli config add board_manager.additional_urls \
+            https://arduino.esp8266.com/stable/package_esp8266com_index.json
 
-        git clone --depth 1 --branch 1.14.1 https://github.com/adafruit/RTClib.git ~/Arduino/libraries/RTClib
+          arduino-cli core update-index
+          arduino-cli core install esp8266:esp8266
 
-    - name: Compile firmware
-      id: compile
-      shell: bash
-      run: |
-        set -euo pipefail
+          arduino-cli lib install "ArduinoJson"
+          arduino-cli lib install "PubSubClient"
 
-        rm -rf firmware
-        mkdir -p firmware
+          mkdir -p ~/Arduino/libraries
+          git clone --depth 1 --branch 1.14.1 \
+            https://github.com/adafruit/RTClib.git \
+            ~/Arduino/libraries/RTClib
 
-        test -f wifi_monitor.ino
+      - name: Select latest firmware source
+        id: source
+        shell: bash
+        run: |
+          set -euo pipefail
 
-        VERSION=$(sed -n 's/^#define FIRMWARE_VERSION "\([^"]*\)".*/\1/p' wifi_monitor.ino | head -n1)
-        test -n "$VERSION"
+          # Alle INO-Dateien im Repository-Hauptverzeichnis ermitteln.
+          mapfile -t INO_FILES < <(
+            find . -maxdepth 1 -type f -name '*.ino' \
+              -printf '%f\n' | sort
+          )
 
-        echo "Firmware version: $VERSION"
-        echo "Board: ${{ matrix.board.fqbn }}"
+          if [[ -f "wifi_monitor.ino" ]]; then
+            # Der exakte Standardname hat immer Vorrang.
+            SELECTED="wifi_monitor.ino"
+            echo "Standarddatei gefunden: $SELECTED"
+          else
+            if [[ ${#INO_FILES[@]} -eq 0 ]]; then
+              echo "::error::Keine INO-Datei im Hauptverzeichnis gefunden."
+              exit 1
+            fi
 
-        # Nur im temporaeren Runner wird der Dateiname geaendert.
-        # Im Repository bleibt die Datei wifi_monitor.ino.
-        mv wifi_monitor.ino arduino.ino
+            # Neueste Datei anhand des letzten Git-Commit-Zeitstempels.
+            SELECTED=""
 
-        # Bei 1M512 wird der OTA-Code bereits beim Kompilieren ausgeschlossen.
-        if [[ "${{ matrix.board.fqbn }}" == *":eesz=1M512" ]]; then
-          echo "Small-flash build: OTA-Code wird ausgeschlossen."
+            for FILE in "${INO_FILES[@]}"; do
+              TIMESTAMP=$(git log -1 --format=%ct -- "$FILE")
 
-          arduino-cli compile \
-            --fqbn "${{ matrix.board.fqbn }}" \
-            --clean \
-            --output-dir firmware \
-            --build-property compiler.cpp.extra_flags=-DWIFI_MONITOR_SMALL_FLASH \
-            .
-        else
-          echo "Normaler Build mit OTA-Unterstuetzung."
+              if [[ -z "$TIMESTAMP" ]]; then
+                TIMESTAMP=0
+              fi
 
-          arduino-cli compile \
-            --fqbn "${{ matrix.board.fqbn }}" \
-            --clean \
-            --output-dir firmware \
-            .
-        fi
+              if [[ -z "$SELECTED" ]] || \
+                 (( TIMESTAMP > SELECTED_TIMESTAMP )); then
+                SELECTED="$FILE"
+                SELECTED_TIMESTAMP="$TIMESTAMP"
+              fi
+            done
 
-        # Boardbezeichnung fuer den Dateinamen festlegen.
-        case "${{ matrix.board.fqbn }}" in
-          esp8266:esp8266:esp8285:eesz=1M512)
-            BOARD_NAME="ESP8285-1M512"
-            ;;
-          esp8266:esp8266:generic:eesz=1M512)
-            BOARD_NAME="ESP8266-1M512"
-            ;;
-          esp8266:esp8266:generic:eesz=4M1M)
-            BOARD_NAME="ESP8266-4M1M"
-            ;;
-          esp8266:esp8266:generic:eesz=4M2M)
-            BOARD_NAME="ESP8266-4M2M"
-            ;;
-          *)
-            echo "Unbekannte Board-Konfiguration."
+            if [[ -z "$SELECTED" ]]; then
+              echo "::error::Keine geeignete INO-Datei gefunden."
+              exit 1
+            fi
+          fi
+
+          # Firmware-Version aus der tatsächlich ausgewählten Datei.
+          VERSION=$(sed -n \
+            's/^#define FIRMWARE_VERSION "\([^"]*\)".*/\1/p' \
+            "$SELECTED" | head -n 1)
+
+          if [[ -z "$VERSION" ]]; then
+            echo "::error::FIRMWARE_VERSION fehlt in $SELECTED."
             exit 1
-            ;;
-        esac
+          fi
 
-        # Das erwartete Compiler-Ergebnis muss vorhanden sein.
-        test -f firmware/arduino.ino.bin
+          echo "Ausgewählte Quelldatei: $SELECTED"
+          echo "Firmware-Version: $VERSION"
 
-        BIN="firmware/WiFi-Monitor_v${VERSION}_${BOARD_NAME}.bin"
+          echo "source_file=$SELECTED" >> "$GITHUB_OUTPUT"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
 
-        mv firmware/arduino.ino.bin "$BIN"
+      - name: Prepare isolated build directory
+        shell: bash
+        env:
+          SELECTED_SOURCE: ${{ steps.source.outputs.source_file }}
+        run: |
+          set -euo pipefail
 
-        echo "board_name=$BOARD_NAME" >> "$GITHUB_OUTPUT"
-        echo "bin_file=$BIN" >> "$GITHUB_OUTPUT"
+          rm -rf build-src firmware
 
-        echo "Erzeugte Firmware:"
-        ls -lh "$BIN"
+          mkdir -p build-src/arduino firmware
 
-    - name: Upload manual-build artifact
-      if: github.event_name == 'workflow_dispatch'
-      uses: actions/upload-artifact@v4
-      with:
-        name: WiFi-Monitor-${{ steps.compile.outputs.board_name }}
-        path: ${{ steps.compile.outputs.bin_file }}
-        if-no-files-found: error
-        retention-days: 14
+          # Projektdateien einschließlich lokaler Header und Unterordner
+          # übernehmen, aber sämtliche INO-Dateien ausschließen.
+          rsync -a \
+            --exclude='.git/' \
+            --exclude='.github/' \
+            --exclude='*.ino' \
+            ./ build-src/arduino/
 
-    - name: Upload firmware to release
-      if: github.event_name == 'release'
-      uses: softprops/action-gh-release@v3
-      with:
-        tag_name: ${{ github.event.release.tag_name }}
-        files: firmware/*.bin
-        overwrite_files: true
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Ausschließlich die ausgewählte Firmware als Sketch übernehmen.
+          cp "$SELECTED_SOURCE" build-src/arduino/arduino.ino
+
+          echo "Build-Verzeichnis vorbereitet."
+          echo "Verwendete Quelldatei: $SELECTED_SOURCE"
+
+          # Kontrolle: Im Build-Verzeichnis darf nur eine INO-Datei liegen.
+          mapfile -t BUILD_INO_FILES < <(
+            find build-src -type f -name '*.ino'
+          )
+
+          if [[ ${#BUILD_INO_FILES[@]} -ne 1 ]]; then
+            echo "::error::Das Build-Verzeichnis enthält nicht genau eine INO-Datei."
+            exit 1
+          fi
+
+      - name: Compile firmware
+        shell: bash
+        env:
+          FQBN: ${{ matrix.board.fqbn }}
+        run: |
+          set -euo pipefail
+
+          echo "Firmware-Version: ${{ steps.source.outputs.version }}"
+          echo "Board: $FQBN"
+
+          # Bei 1M512 wird OTA bereits beim Kompilieren ausgeschlossen.
+          if [[ "$FQBN" == *":eesz=1M512" ]]; then
+            echo "Small-flash build: OTA-Code wird ausgeschlossen."
+
+            arduino-cli compile \
+              --fqbn "$FQBN" \
+              --clean \
+              --output-dir firmware \
+              --build-property compiler.cpp.extra_flags=-DWIFI_MONITOR_SMALL_FLASH \
+              build-src/arduino
+          else
+            echo "Normaler Build mit OTA-Unterstützung."
+
+            arduino-cli compile \
+              --fqbn "$FQBN" \
+              --clean \
+              --output-dir firmware \
+              build-src/arduino
+          fi
+
+          case "$FQBN" in
+            esp8266:esp8266:esp8285:eesz=1M512)
+              BOARD_NAME="ESP8285-1M512"
+              ;;
+            esp8266:esp8266:generic:eesz=1M512)
+              BOARD_NAME="ESP8266-1M512"
+              ;;
+            esp8266:esp8266:generic:eesz=4M1M)
+              BOARD_NAME="ESP8266-4M1M"
+              ;;
+            esp8266:esp8266:generic:eesz=4M2M)
+              BOARD_NAME="ESP8266-4M2M"
+              ;;
+            *)
+              echo "::error::Unbekannte Board-Konfiguration: $FQBN"
+              exit 1
+              ;;
+          esac
+
+          test -f firmware/arduino.ino.bin
+
+          VERSION="${{ steps.source.outputs.version }}"
+          BIN="firmware/WiFi-Monitor_v${VERSION}_${BOARD_NAME}.bin"
+
+          mv firmware/arduino.ino.bin "$BIN"
+
+          echo "Erzeugte Firmware:"
+          ls -lh "$BIN"
+
+          echo "bin_file=$BIN" >> "$GITHUB_OUTPUT"
+          echo "board_name=$BOARD_NAME" >> "$GITHUB_OUTPUT"
+
+      - name: Upload firmware to release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          BIN_FILE: ${{ steps.compile.outputs.bin_file }}
+          EVENT_NAME: ${{ github.event_name }}
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+          REPOSITORY: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+
+          if [[ "$EVENT_NAME" == "release" ]]; then
+            TARGET_TAG="$RELEASE_TAG"
+          else
+            # Manueller Build: vorhandenes neuestes Release verwenden.
+            TARGET_TAG=$(gh release list \
+              --repo "$REPOSITORY" \
+              --limit 1 \
+              --json tagName,isDraft \
+              --jq '[.[] | select(.isDraft == false)][0].tagName')
+
+            if [[ -z "$TARGET_TAG" || "$TARGET_TAG" == "null" ]]; then
+              echo "::error::Kein veröffentlichtes Release vorhanden."
+              echo "Für manuelle Builds muss zuerst ein Release erstellt werden."
+              exit 1
+            fi
+          fi
+
+          echo "Ziel-Release: $TARGET_TAG"
+          echo "Firmware: $BIN_FILE"
+
+          # Die BIN wird direkt als Release-Datei hochgeladen.
+          # Eine bereits vorhandene Datei gleichen Namens wird ersetzt.
+          gh release upload "$TARGET_TAG" "$BIN_FILE" \
+            --repo "$REPOSITORY" \
+            --clobber
+
+          echo "Firmware erfolgreich zum Release hochgeladen."
