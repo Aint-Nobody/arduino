@@ -56,6 +56,7 @@ jobs:
           arduino-cli lib install "PubSubClient"
 
           mkdir -p ~/Arduino/libraries
+
           git clone --depth 1 --branch 1.14.1 \
             https://github.com/adafruit/RTClib.git \
             ~/Arduino/libraries/RTClib
@@ -66,27 +67,25 @@ jobs:
         run: |
           set -euo pipefail
 
-          # Alle INO-Dateien im Repository-Hauptverzeichnis ermitteln.
           mapfile -t INO_FILES < <(
             find . -maxdepth 1 -type f -name '*.ino' \
               -printf '%f\n' | sort
           )
 
           if [[ -f "wifi_monitor.ino" ]]; then
-            # Der exakte Standardname hat immer Vorrang.
             SELECTED="wifi_monitor.ino"
-            echo "Standarddatei gefunden: $SELECTED"
+            echo "Standarddatei hat Vorrang: $SELECTED"
           else
             if [[ ${#INO_FILES[@]} -eq 0 ]]; then
               echo "::error::Keine INO-Datei im Hauptverzeichnis gefunden."
               exit 1
             fi
 
-            # Neueste Datei anhand des letzten Git-Commit-Zeitstempels.
             SELECTED=""
+            SELECTED_TIMESTAMP=0
 
             for FILE in "${INO_FILES[@]}"; do
-              TIMESTAMP=$(git log -1 --format=%ct -- "$FILE")
+              TIMESTAMP=$(git log -1 --format=%ct -- "$FILE" || true)
 
               if [[ -z "$TIMESTAMP" ]]; then
                 TIMESTAMP=0
@@ -105,7 +104,6 @@ jobs:
             fi
           fi
 
-          # Firmware-Version aus der tatsächlich ausgewählten Datei.
           VERSION=$(sed -n \
             's/^#define FIRMWARE_VERSION "\([^"]*\)".*/\1/p' \
             "$SELECTED" | head -n 1)
@@ -132,21 +130,18 @@ jobs:
 
           mkdir -p build-src/arduino firmware
 
-          # Projektdateien einschließlich lokaler Header und Unterordner
-          # übernehmen, aber sämtliche INO-Dateien ausschließen.
+          # Alle Projektdateien außer anderen INO-Dateien übernehmen.
+          # Die ausgewählte INO-Datei wird anschließend separat kopiert.
           rsync -a \
             --exclude='.git/' \
             --exclude='.github/' \
             --exclude='*.ino' \
             ./ build-src/arduino/
 
-          # Ausschließlich die ausgewählte Firmware als Sketch übernehmen.
           cp "$SELECTED_SOURCE" build-src/arduino/arduino.ino
 
-          echo "Build-Verzeichnis vorbereitet."
           echo "Verwendete Quelldatei: $SELECTED_SOURCE"
 
-          # Kontrolle: Im Build-Verzeichnis darf nur eine INO-Datei liegen.
           mapfile -t BUILD_INO_FILES < <(
             find build-src -type f -name '*.ino'
           )
@@ -156,17 +151,21 @@ jobs:
             exit 1
           fi
 
+          echo "Isoliertes Build-Verzeichnis geprüft."
+
       - name: Compile firmware
+        id: compile
         shell: bash
         env:
           FQBN: ${{ matrix.board.fqbn }}
         run: |
           set -euo pipefail
 
-          echo "Firmware-Version: ${{ steps.source.outputs.version }}"
+          VERSION="${{ steps.source.outputs.version }}"
+
+          echo "Firmware-Version: $VERSION"
           echo "Board: $FQBN"
 
-          # Bei 1M512 wird OTA bereits beim Kompilieren ausgeschlossen.
           if [[ "$FQBN" == *":eesz=1M512" ]]; then
             echo "Small-flash build: OTA-Code wird ausgeschlossen."
 
@@ -205,12 +204,23 @@ jobs:
               ;;
           esac
 
-          test -f firmware/arduino.ino.bin
+          COMPILED_BIN="firmware/arduino.ino.bin"
 
-          VERSION="${{ steps.source.outputs.version }}"
+          if [[ ! -f "$COMPILED_BIN" ]]; then
+            echo "::error::Die erwartete BIN-Datei fehlt: $COMPILED_BIN"
+            echo "Inhalt des Firmware-Verzeichnisses:"
+            ls -lah firmware
+            exit 1
+          fi
+
           BIN="firmware/WiFi-Monitor_v${VERSION}_${BOARD_NAME}.bin"
 
-          mv firmware/arduino.ino.bin "$BIN"
+          mv "$COMPILED_BIN" "$BIN"
+
+          if [[ ! -s "$BIN" ]]; then
+            echo "::error::Die erzeugte BIN-Datei fehlt oder ist leer."
+            exit 1
+          fi
 
           echo "Erzeugte Firmware:"
           ls -lh "$BIN"
@@ -229,19 +239,31 @@ jobs:
         run: |
           set -euo pipefail
 
+          # Verhindert einen Upload mit leerem Dateinamen.
+          if [[ -z "${BIN_FILE:-}" ]]; then
+            echo "::error::Der Kompilierungsschritt hat keinen BIN-Dateinamen ausgegeben."
+            exit 1
+          fi
+
+          if [[ ! -s "$BIN_FILE" ]]; then
+            echo "::error::Die Firmware-Datei fehlt oder ist leer: $BIN_FILE"
+            exit 1
+          fi
+
           if [[ "$EVENT_NAME" == "release" ]]; then
             TARGET_TAG="$RELEASE_TAG"
           else
-            # Manueller Build: vorhandenes neuestes Release verwenden.
+            # Bei einem manuellen Build das neueste veröffentlichte
+            # GitHub-Release als Upload-Ziel verwenden.
             TARGET_TAG=$(gh release list \
               --repo "$REPOSITORY" \
-              --limit 1 \
-              --json tagName,isDraft \
-              --jq '[.[] | select(.isDraft == false)][0].tagName')
+              --limit 100 \
+              --json tagName,isDraft,isPrerelease,publishedAt \
+              --jq '[.[] | select(.isDraft == false and .isPrerelease == false)] | sort_by(.publishedAt) | last | .tagName // empty')
 
-            if [[ -z "$TARGET_TAG" || "$TARGET_TAG" == "null" ]]; then
-              echo "::error::Kein veröffentlichtes Release vorhanden."
-              echo "Für manuelle Builds muss zuerst ein Release erstellt werden."
+            if [[ -z "$TARGET_TAG" ]]; then
+              echo "::error::Kein veröffentlichtes stabiles Release gefunden."
+              echo "Bitte zuerst ein Release veröffentlichen."
               exit 1
             fi
           fi
@@ -249,8 +271,6 @@ jobs:
           echo "Ziel-Release: $TARGET_TAG"
           echo "Firmware: $BIN_FILE"
 
-          # Die BIN wird direkt als Release-Datei hochgeladen.
-          # Eine bereits vorhandene Datei gleichen Namens wird ersetzt.
           gh release upload "$TARGET_TAG" "$BIN_FILE" \
             --repo "$REPOSITORY" \
             --clobber
