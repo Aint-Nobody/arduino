@@ -113,6 +113,14 @@ jobs:
             exit 1
           fi
 
+          if [[ "$SELECTED" =~ ^wifi-monitor_([0-9]{6}[a-z])\.ino$ ]]; then
+            FILE_VERSION="${BASH_REMATCH[1]}"
+            if [[ "$VERSION" != "$FILE_VERSION" ]]; then
+              echo "::error::Dateiname ($FILE_VERSION) und FIRMWARE_VERSION ($VERSION) stimmen nicht ueberein."
+              exit 1
+            fi
+          fi
+
           echo "Ausgewählte Quelldatei: $SELECTED"
           echo "Firmware-Version: $VERSION"
 
@@ -163,17 +171,33 @@ jobs:
 
           VERSION="${{ steps.source.outputs.version }}"
 
+          BUILD_LOCAL="$(TZ=Europe/Berlin date '+%Y-%m-%d %H:%M:%S')"
+          BUILD_TZ_ABBR="$(TZ=Europe/Berlin date '+%Z')"
+          if [[ "$BUILD_TZ_ABBR" == "CEST" ]]; then
+            BUILD_TZ_LABEL="MESZ"
+          else
+            BUILD_TZ_LABEL="MEZ"
+          fi
+          BUILD_TIMESTAMP="$BUILD_LOCAL $BUILD_TZ_LABEL"
+          cat > build-src/arduino/build_metadata.h <<EOF
+          #ifndef WIFI_MONITOR_BUILD_METADATA_H
+          #define WIFI_MONITOR_BUILD_METADATA_H
+          #define FIRMWARE_BUILD_DATE "$BUILD_TIMESTAMP"
+          #endif
+          EOF
+          echo "Build-Zeitpunkt: $BUILD_TIMESTAMP"
+
           echo "Firmware-Version: $VERSION"
           echo "Board: $FQBN"
 
           if [[ "$FQBN" == *":eesz=1M512" ]]; then
-            echo "Small-flash build: OTA und RAM-/Call-Chain-Analyse werden ausgeschlossen."
+            echo "Small-flash build: OTA, Vendor Lookup und RAM-/Call-Chain-Analyse werden zur Compile-Zeit ausgeschlossen."
 
             arduino-cli compile \
               --fqbn "$FQBN" \
               --clean \
               --output-dir firmware \
-              --build-property compiler.cpp.extra_flags="-DWIFI_MONITOR_SMALL_FLASH -DWIFI_MONITOR_DISABLE_RAM_ANALYSIS" \
+              --build-property compiler.cpp.extra_flags="-DWIFI_MONITOR_SMALL_FLASH -DWIFI_MONITOR_DISABLE_RAM_ANALYSIS -DWIFI_MONITOR_DISABLE_VENDOR_LOOKUP" \
               build-src/arduino
           elif [[ "$FQBN" == *":eesz=4M1M" ]]; then
             echo "4M1M build: RAM-/Call-Chain-Analyse wird per Precompile ausgeschlossen."
@@ -226,7 +250,7 @@ jobs:
             exit 1
           fi
 
-          BIN="firmware/WiFi-Monitor_v${VERSION}_${BOARD_NAME}.bin"
+          BIN="firmware/WiFi-Monitor_${VERSION}_${BOARD_NAME}.bin"
 
           mv "$COMPILED_BIN" "$BIN"
 
@@ -289,4 +313,3 @@ jobs:
             --clobber
 
           echo "Firmware erfolgreich zum Release hochgeladen."
-          
