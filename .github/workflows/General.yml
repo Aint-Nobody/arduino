@@ -203,12 +203,21 @@ jobs:
           fi
           echo "IROM-Kapazitaet laut Linker-Skript $LINKER_PATTERN: $IROM_CAPACITY Byte"
 
-          # IRAM-Code ist nicht gleich der ELF-Sektion .text. Summiere alle
-          # ELF-Sektionen, deren virtuelle Laufzeitadresse im IRAM-Segment liegt.
-          IRAM_ORG_HEX="$(grep -E 'iram1_0_seg[[:space:]]*:' "$LINKER_SCRIPT" | sed -n 's/.*org[[:space:]]*=[[:space:]]*0x\([0-9A-Fa-f][0-9A-Fa-f]*\).*/\1/p' | head -n 1)"
-          IRAM_LEN_HEX="$(grep -E 'iram1_0_seg[[:space:]]*:' "$LINKER_SCRIPT" | sed -n 's/.*len[[:space:]]*=[[:space:]]*0x\([0-9A-Fa-f][0-9A-Fa-f]*\).*/\1/p' | head -n 1)"
+          # Das Flash-spezifische Linker-Skript bindet das gemeinsame
+          # ESP8266-Linker-Skript ein; das IRAM-Segment steht daher nicht
+          # zwingend in eagle.flash.*.ld selbst.
+          IRAM_SCRIPT="$(find "$HOME/.arduino15/packages/esp8266" -type f -name 'eagle.app.v6.common.ld' -print -quit || true)"
+          if [[ -z "$IRAM_SCRIPT" ]]; then
+            IRAM_SCRIPT="$LINKER_SCRIPT"
+          fi
+          # || true verhindert, dass set -e/pipefail die eigentliche
+          # Fehlermeldung unterdrueckt, falls ein Skript keinen Treffer hat.
+          IRAM_ORG_HEX="$(grep -E 'iram1_0_seg[[:space:]]*:' "$IRAM_SCRIPT" 2>/dev/null | sed -n 's/.*org[[:space:]]*=[[:space:]]*0x\([0-9A-Fa-f][0-9A-Fa-f]*\).*/\1/p' | head -n 1 || true)"
+          IRAM_LEN_HEX="$(grep -E 'iram1_0_seg[[:space:]]*:' "$IRAM_SCRIPT" 2>/dev/null | sed -n 's/.*len[[:space:]]*=[[:space:]]*0x\([0-9A-Fa-f][0-9A-Fa-f]*\).*/\1/p' | head -n 1 || true)"
           if [[ -z "$IRAM_ORG_HEX" || -z "$IRAM_LEN_HEX" ]]; then
-            echo "::error::IRAM-Start oder IRAM-Laenge konnte nicht aus $LINKER_SCRIPT gelesen werden."
+            echo "::error::IRAM-Start oder IRAM-Laenge konnte weder aus $IRAM_SCRIPT noch aus $LINKER_SCRIPT gelesen werden."
+            echo "Linker-Skripte mit IRAM-Segment:"
+            grep -R -n -E 'iram1_0_seg[[:space:]]*:' "$HOME/.arduino15/packages/esp8266" --include='*.ld' || true
             exit 1
           fi
           IRAM_BASE=$((16#$IRAM_ORG_HEX))
@@ -218,7 +227,7 @@ jobs:
             echo "::error::IRAM-Kapazitaet konnte nicht aus $LINKER_SCRIPT gelesen werden."
             exit 1
           fi
-          printf 'IRAM-Segment laut Linker-Skript: 0x%x bis 0x%x (%s Byte)\n' "$IRAM_BASE" "$IRAM_LIMIT" "$IRAM_CAPACITY"
+          printf 'IRAM-Segment laut %s: 0x%x bis 0x%x (%s Byte)\n' "$IRAM_SCRIPT" "$IRAM_BASE" "$IRAM_LIMIT" "$IRAM_CAPACITY"
 
           cat > build-src/arduino/build_metadata.h <<EOF
           #ifndef WIFI_MONITOR_BUILD_METADATA_H
@@ -248,6 +257,157 @@ jobs:
           OBJDUMP_TOOL="$(find "$HOME/.arduino15/packages/esp8266/tools" -type f -name 'xtensa-lx106-elf-objdump' -perm -u+x -print -quit)"
           if [[ -z "$SIZE_TOOL" ]]; then
             echo "::error::xtensa-lx106-elf-size wurde in der installierten ESP8266-Toolchain nicht gefunden."
+            exit 1
+          fi
+          if [[ -z "$OBJDUMP_TOOL" ]]; then
+            echo "::error::xtensa-lx106-elf-objdump wurde in der installierten ESP8266-Toolchain nicht gefunden."
+            exit 1
+          fi
+
+          iram_bytes_from_elf() {
+            local elf="$1" report index section size_hex vma_hex size addr total=0
+            report="$("$OBJDUMP_TOOL" -h "$elf")"
+            while read -r index section size_hex vma_hex _; do
+              [[ "$index" =~ ^[0-9]+$ ]] || continue
+              [[ "$size_hex" =~ ^[0-9A-Fa-f]+$ && "$vma_hex" =~ ^[0-9A-Fa-f]+$ ]] || continue
+              size=$((16#$size_hex))
+              addr=$((16#$vma_hex))
+              if (( addr >= IRAM_BASE && addr < IRAM_LIMIT )); then
+                total=$((total + size))
+              fi
+            done <<< "$report"
+            printf '%s\n' "$total"
+          }
+
+          # Initialize numeric placeholders. Each pass compiles the exact same
+          # metric-reporting code; measured values are then embedded and rebuilt.
+          BIN_BYTES=0; IRAM_BYTES=0; DATA_BYTES=0; RODATA_BYTES=0; BSS_BYTES=0; IROM_BYTES=0
+          write_metrics_header
+
+          BUILD_PATH="$PWD/build-work"
+          for PASS in 1 2 3 4; do
+            rm -rf "$BUILD_PATH" firmware
+            mkdir -p firmware
+            LOG="firmware/compile-pass-${PASS}.log"
+            arduino-cli compile \
+              --fqbn "$FQBN" \
+              --clean \
+              --verbose \
+              --build-path "$BUILD_PATH" \
+              --output-dir firmware \
+              --build-property compiler.cpp.extra_flags="$BUILD_FLAGS" \
+              build-src/arduino 2>&1 | tee "$LOG"
+
+            ELF="$BUILD_PATH/arduino.ino.elf"
+            BIN_PATH="firmware/arduino.ino.bin"
+            if [[ ! -s "$ELF" || ! -s "$BIN_PATH" ]]; then
+              echo "::error::ELF oder BIN fehlt nach Build-Pass $PASS."
+              find "$BUILD_PATH" firmware -maxdepth 3 -type f -printf '%p (%s Byte)\n'
+              exit 1
+            fi
+
+            # Read section sizes directly from the final linked ELF.
+            SIZE_REPORT="$($SIZE_TOOL -A "$ELF")"
+            section_bytes() {
+              local name="$1"
+              awk -v wanted="$name" '$1 == wanted && $2 ~ /^[0-9]+$/ { total += $2 } END { print total+0 }' <<< "$SIZE_REPORT"
+            }
+            NEW_IRAM="$(iram_bytes_from_elf "$ELF")"
+            NEW_DATA="$(section_bytes .data)"
+            NEW_RODATA="$(section_bytes .rodata)"
+            NEW_BSS="$(section_bytes .bss)"
+            NEW_IROM="$(section_bytes .irom0.text)"
+            NEW_BIN="$(stat -c '%s' "$BIN_PATH")"
+
+            if ! [[ "$NEW_IRAM$NEW_DATA$NEW_RODATA$NEW_BSS$NEW_IROM$NEW_BIN" =~ ^[0-9]+$ ]]; then
+              echo "::error::Mindestens ein Messwert ist nicht numerisch."
+              exit 1
+            fi
+
+            printf 'Build-Pass %s: BIN=%s, IRAM=%s, DATA=%s, RODATA=%s, BSS=%s, IROM=%s/%s Byte\n' \
+              "$PASS" "$NEW_BIN" "$NEW_IRAM" "$NEW_DATA" "$NEW_RODATA" "$NEW_BSS" "$NEW_IROM" "$IROM_CAPACITY"
+
+            if [[ "$NEW_BIN" == "$BIN_BYTES" && "$NEW_IRAM" == "$IRAM_BYTES" && "$NEW_DATA" == "$DATA_BYTES" && "$NEW_RODATA" == "$RODATA_BYTES" && "$NEW_BSS" == "$BSS_BYTES" && "$NEW_IROM" == "$IROM_BYTES" ]]; then
+              echo "Messwerte stimmen mit dem eingebetteten Header ueberein; finaler Build verifiziert."
+              break
+            fi
+
+            BIN_BYTES="$NEW_BIN"; IRAM_BYTES="$NEW_IRAM"; DATA_BYTES="$NEW_DATA"; RODATA_BYTES="$NEW_RODATA"; BSS_BYTES="$NEW_BSS"; IROM_BYTES="$NEW_IROM"
+            write_metrics_header
+            if [[ "$PASS" == 4 ]]; then
+              echo "::error::Build-Messwerte haben sich nach vier Durchlaeufen nicht stabilisiert."
+              exit 1
+            fi
+          done
+
+          # Verify the final ELF/BIN against the header values after the last compile.
+          FINAL_SIZE_REPORT="$($SIZE_TOOL -A "$BUILD_PATH/arduino.ino.elf")"
+          final_section_bytes() { awk -v wanted="$1" '$1 == wanted && $2 ~ /^[0-9]+$/ { total += $2 } END { print total+0 }' <<< "$FINAL_SIZE_REPORT"; }
+          FINAL_BIN_BYTES="$(stat -c '%s' firmware/arduino.ino.bin)"
+          [[ "$FINAL_BIN_BYTES" == "$BIN_BYTES" ]] || { echo "::error::Finale BIN-Groesse weicht vom eingebetteten Wert ab."; exit 1; }
+          [[ "$(iram_bytes_from_elf "$BUILD_PATH/arduino.ino.elf")" == "$IRAM_BYTES" ]] || { echo "::error::Finaler IRAM-Wert weicht ab."; exit 1; }
+          [[ "$(final_section_bytes .data)" == "$DATA_BYTES" ]] || { echo "::error::Finaler DATA-Wert weicht ab."; exit 1; }
+          [[ "$(final_section_bytes .rodata)" == "$RODATA_BYTES" ]] || { echo "::error::Finaler RODATA-Wert weicht ab."; exit 1; }
+          [[ "$(final_section_bytes .bss)" == "$BSS_BYTES" ]] || { echo "::error::Finaler BSS-Wert weicht ab."; exit 1; }
+          [[ "$(final_section_bytes .irom0.text)" == "$IROM_BYTES" ]] || { echo "::error::Finaler IROM-Wert weicht ab."; exit 1; }
+
+          BIN="firmware/WiFi-Monitor_v${VERSION}_${BOARD_NAME}.bin"
+          mv firmware/arduino.ino.bin "$BIN"
+          test -s "$BIN"
+          echo "Finale Firmware und Messwerte:"; ls -lh "$BIN"
+          cat "$METRICS_HEADER"
+          echo "bin_file=$BIN" >> "$GITHUB_OUTPUT"
+          echo "board_name=$BOARD_NAME" >> "$GITHUB_OUTPUT"
+
+      - name: Upload firmware to release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          BIN_FILE: ${{ steps.compile.outputs.bin_file }}
+          EVENT_NAME: ${{ github.event_name }}
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+          REPOSITORY: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+
+          # Verhindert einen Upload mit leerem Dateinamen.
+          if [[ -z "${BIN_FILE:-}" ]]; then
+            echo "::error::Der Kompilierungsschritt hat keinen BIN-Dateinamen ausgegeben."
+            exit 1
+          fi
+
+          if [[ ! -s "$BIN_FILE" ]]; then
+            echo "::error::Die Firmware-Datei fehlt oder ist leer: $BIN_FILE"
+            exit 1
+          fi
+
+          if [[ "$EVENT_NAME" == "release" ]]; then
+            TARGET_TAG="$RELEASE_TAG"
+          else
+            # Bei einem manuellen Build das neueste veröffentlichte
+            # GitHub-Release als Upload-Ziel verwenden.
+            TARGET_TAG=$(gh release list \
+              --repo "$REPOSITORY" \
+              --limit 100 \
+              --json tagName,isDraft,isPrerelease,publishedAt \
+              --jq '[.[] | select(.isDraft == false and .isPrerelease == false)] | sort_by(.publishedAt) | last | .tagName // empty')
+
+            if [[ -z "$TARGET_TAG" ]]; then
+              echo "::error::Kein veröffentlichtes stabiles Release gefunden."
+              echo "Bitte zuerst ein Release veröffentlichen."
+              exit 1
+            fi
+          fi
+
+          echo "Ziel-Release: $TARGET_TAG"
+          echo "Firmware: $BIN_FILE"
+
+          gh release upload "$TARGET_TAG" "$BIN_FILE" \
+            --repo "$REPOSITORY" \
+            --clobber
+
+          echo "Firmware erfolgreich zum Release hochgeladen."
+n der installierten ESP8266-Toolchain nicht gefunden."
             exit 1
           fi
           if [[ -z "$OBJDUMP_TOOL" ]]; then
