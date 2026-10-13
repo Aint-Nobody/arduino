@@ -167,22 +167,35 @@ jobs:
           echo "Board: $FQBN"
 
           if [[ "$FQBN" == *":eesz=1M512" ]]; then
-            echo "Small-flash build: OTA-Code wird ausgeschlossen."
+            echo "Small-flash build: OTA und RAM-/Call-Chain-Analyse werden ausgeschlossen."
 
             arduino-cli compile \
               --fqbn "$FQBN" \
               --clean \
               --output-dir firmware \
-              --build-property compiler.cpp.extra_flags=-DWIFI_MONITOR_SMALL_FLASH \
+              --build-property compiler.cpp.extra_flags="-DWIFI_MONITOR_SMALL_FLASH -DWIFI_MONITOR_DISABLE_RAM_ANALYSIS" \
+              build-src/arduino
+          elif [[ "$FQBN" == *":eesz=4M1M" ]]; then
+            echo "4M1M build: RAM-/Call-Chain-Analyse wird per Precompile ausgeschlossen."
+
+            arduino-cli compile \
+              --fqbn "$FQBN" \
+              --clean \
+              --output-dir firmware \
+              --build-property compiler.cpp.extra_flags=-DWIFI_MONITOR_DISABLE_RAM_ANALYSIS \
+              build-src/arduino
+          elif [[ "$FQBN" == *":eesz=4M2M" ]]; then
+            echo "4M2M build: RAM-/Call-Chain-Analyse wird einkompiliert."
+
+            arduino-cli compile \
+              --fqbn "$FQBN" \
+              --clean \
+              --output-dir firmware \
+              --build-property compiler.cpp.extra_flags=-DWIFI_MONITOR_ENABLE_RAM_ANALYSIS \
               build-src/arduino
           else
-            echo "Normaler Build mit OTA-Unterstützung."
-
-            arduino-cli compile \
-              --fqbn "$FQBN" \
-              --clean \
-              --output-dir firmware \
-              build-src/arduino
+            echo "::error::Unbekannte Board-Konfiguration für RAM-Analyse: $FQBN"
+            exit 1
           fi
 
           case "$FQBN" in
@@ -276,3 +289,4 @@ jobs:
             --clobber
 
           echo "Firmware erfolgreich zum Release hochgeladen."
+          
