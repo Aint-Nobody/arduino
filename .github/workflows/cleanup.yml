@@ -27,7 +27,7 @@ steps:
     run: |
       set -euo pipefail
 
-      CUTOFF=$(( $(date +%s) - 3 * 24 * 60 * 60 ))
+      CUTOFF=$(( $(date +%s) - 259200 ))
       DELETED=0
 
       while IFS= read -r -d '' FILE; do
@@ -42,7 +42,7 @@ steps:
 
       if [[ "$DELETED" -gt 0 ]]; then
         git commit -m "Cleanup: delete INO files older than 3 days"
-        git push
+        git push origin "HEAD:${GITHUB_REF_NAME}"
         echo "Deleted INO files: $DELETED"
       else
         echo "No INO files older than 3 days found."
@@ -52,7 +52,7 @@ steps:
     uses: actions/github-script@v7
     with:
       script: |
-        const cutoff = Date.now() - 3 * 24 * 60 * 60 * 1000;
+        const cutoff = Date.now() - 259200000;
 
         const releases = await github.paginate(
           github.rest.repos.listReleases,
