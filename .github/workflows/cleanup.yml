@@ -8,7 +8,7 @@ permissions:
 
 jobs:
   cleanup:
-    name: Delete old INO and BIN files
+    name: Delete old INO, IN and BIN files
     runs-on: ubuntu-latest
 
     steps:
@@ -22,7 +22,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-      - name: Delete INO files older than 3 days
+      - name: Delete INO and IN files older than 3 days
         shell: bash
         run: |
           set -euo pipefail
@@ -34,18 +34,18 @@ jobs:
             LAST_CHANGE=$(git log -1 --format=%ct -- "$FILE")
 
             if [[ -n "$LAST_CHANGE" && "$LAST_CHANGE" -lt "$CUTOFF" ]]; then
-              printf 'Deleting INO: %s\\n' "$FILE"
+              printf 'Deleting old source/archive file: %s\n' "$FILE"
               git rm -- "$FILE"
               DELETED=$((DELETED + 1))
             fi
-          done < <(git ls-files -z -- '*.ino')
+          done < <(git ls-files -z -- '*.ino' '*.in')
 
           if [[ "$DELETED" -gt 0 ]]; then
-            git commit -m "Cleanup: delete INO files older than 3 days"
+            git commit -m "Cleanup: delete INO and IN files older than 3 days"
             git push origin "HEAD:${GITHUB_REF_NAME}"
-            echo "Deleted INO files: $DELETED"
+            echo "Deleted INO and IN files: $DELETED"
           else
-            echo "No INO files older than 3 days found."
+            echo "No INO or IN files older than 3 days found."
           fi
 
       - name: Delete BIN release assets older than 3 days
