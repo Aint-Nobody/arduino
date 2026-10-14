@@ -1,6 +1,6 @@
 name: Repository Cleanup
 
-on:
+"on":
 workflow_dispatch:
 
 permissions:
