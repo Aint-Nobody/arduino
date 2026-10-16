@@ -1,4 +1,4 @@
-// Version: 261016f | INO erstellt: 2026-10-16 MESZ
+// Version: 261016f | INO erstellt: 2026-10-16 14:25 MESZ
 // AENDERUNG 261016f:
 // - Ein einzelner ausgewaehlter WLAN-Kanal wird festgesetzt; kein periodisches
 //   erneutes wifi_set_channel() und kein Kanal-Hopping auf diesem Einzelkanal.
@@ -5192,7 +5192,7 @@ extern uint32_t millis_at_ntp_sync;
 //                        Taste r nur in Hintergrundverkehr entfernt;
 //                        FrameTrap-Hinweis gekuerzt; Dateilisten und
 //                        Schutzliste auf 32 Eintraege erweitert.)
-#define FIRMWARE_VERSION "261016e"
+#define FIRMWARE_VERSION "261016f"
 #ifndef FIRMWARE_BUILD_DATE
 #define FIRMWARE_BUILD_DATE "nicht durch den Build-Workflow gesetzt"
 #endif
