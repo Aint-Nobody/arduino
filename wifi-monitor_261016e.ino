@@ -5186,7 +5186,7 @@ extern uint32_t millis_at_ntp_sync;
 //                        Taste r nur in Hintergrundverkehr entfernt;
 //                        FrameTrap-Hinweis gekuerzt; Dateilisten und
 //                        Schutzliste auf 32 Eintraege erweitert.)
-#define FIRMWARE_VERSION "261016d"
+#define FIRMWARE_VERSION "261016e"
 #ifndef FIRMWARE_BUILD_DATE
 #define FIRMWARE_BUILD_DATE "nicht durch den Build-Workflow gesetzt"
 #endif
