@@ -1,10 +1,14 @@
-// Version: 261016f | INO erstellt: 2026-10-16 14:25 MESZ
+// Version: 261016f | INO erstellt: 2026-10-17 17:52 MESZ
 // AENDERUNG 261016f:
-// - Ein einzelner ausgewaehlter WLAN-Kanal wird festgesetzt; kein periodisches
-//   erneutes wifi_set_channel() und kein Kanal-Hopping auf diesem Einzelkanal.
-// - Temporaere Probe-Request/Response-Diagnose: Zaehler, Kanal/RSSI-Verteilung,
-//   Retry-/Sequenzdaten, Empfangsabstaende, Callback-Zeit und Diagnoseverluste;
-//   Auswertung erfolgt im Hauptloop, nicht mit Serial-Ausgaben im RX-Callback.
+// - Filtermenue 2.2: Probe Requests optional auf Broadcast-Zieladresse
+//   FF:FF:FF:FF:FF:FF begrenzen.
+// - Beim Start des HTTP-Datei-Servers im Station Mode nach erfolgreicher
+//   WLAN-Verbindung eine NTP-Synchronisierung anstossen und die aktualisierte
+//   lokale Synchronisationszeit auf der Infoseite ausgeben.
+// - Synchronisationszeit der Infoseite beruecksichtigt UTC-Offset und die
+//   zum Synchronisationszeitpunkt aktive automatische Sommerzeit.
+// - Manuelle Datum-/Uhrzeiteingabe in die Zeit/NTP-Konfiguration verschoben.
+// - Menuebezeichnung und AP-Modus-Erklaerungstext angepasst.
 // Vorversion 261016e:
 // - Info-Zeitbereich unterscheidet manuelle Zeit, NTP-Synchronisation und
 //   fehlende Zeit; Datum/Wochentag/Monat deutsch formatiert, NTP-Updatezeit
@@ -4053,6 +4057,7 @@ bool filter_dir_in  = true;           // "ankommend" (MAC ist Empfaenger/RA)
 bool filter_sel_beacon = false;
 bool filter_sel_probe_req = false;
 bool filter_sel_probe_resp = false;
+bool filter_probe_broadcast_only = false; // Punkt 2.2: nur Probe Requests an FF:FF:FF:FF:FF:FF
 uint16_t filter_mgmt_mask = 0;
 uint16_t filter_ctrl_mask = 0;
 uint16_t filter_data_mask = 0;
@@ -4968,6 +4973,7 @@ void menu_enter_apmode_text_edit(int target);  // Textfeld (SSID/Passwort) einge
 
 // ===================== NTP-Zeitsynchronisation =====================
 void sync_ntp_time();                // beim Boot aufgerufen, holt die Uhrzeit falls aktiviert
+bool sync_ntp_time_on_connected_wifi(); // HTTP-STA: NTP anstossen, ohne die WLAN-Verbindung zu trennen
 time_t current_unix_time();          // aktuelle Unix-Zeit (Sekunden) oder 0 falls nicht synchronisiert
 time_t current_unix_time_with_tz();  // NEU 2.12.0: mit Timezone-Offset, NEU 2.17.8 inkl. Auto-DST
 // NEU 2.17.8: Automatische Sommer-/Winterzeit (Daylight Saving Time, EU-Regel)
@@ -5970,31 +5976,6 @@ uint64_t offline_freeze_time = 0;
 unsigned int channel = 1;
 uint32_t last_check_time, next_check_time;
 
-// Temporäre Diagnose für Probe Requests/Responses im Live-Filter.
-// Callback-seitig nur feste Zähler/MinMax aktualisieren; Ausgabe im Hauptloop.
-struct ProbeDiagStats {
-  volatile uint32_t req, resp, other_mgmt, short_frames;
-  volatile uint32_t req_retry, resp_retry, req_same_seq, resp_same_seq;
-  volatile uint32_t req_bytes, resp_bytes;
-  volatile uint32_t req_interval_min_us, req_interval_max_us, req_burst20;
-  volatile uint32_t resp_interval_min_us, resp_interval_max_us, resp_burst20;
-  volatile uint32_t cb_total_us, cb_max_us, cb_samples;
-  volatile uint32_t loop_channel_set_calls;
-  volatile uint32_t channel_req[15], channel_resp[15];
-  volatile int32_t rssi_sum_req[15], rssi_sum_resp[15];
-  volatile int16_t rssi_min_req[15], rssi_max_req[15];
-  volatile int16_t rssi_min_resp[15], rssi_max_resp[15];
-};
-ProbeDiagStats probe_diag;
-uint32_t probe_diag_last_req_us = 0, probe_diag_last_resp_us = 0;
-uint16_t probe_diag_last_req_seq = 0xFFFF, probe_diag_last_resp_seq = 0xFFFF;
-uint8_t probe_diag_last_req_ta[6] = {0}, probe_diag_last_resp_ta[6] = {0};
-uint32_t probe_diag_last_report_ms = 0;
-uint32_t probe_diag_reported_req = 0, probe_diag_reported_resp = 0;
-void probe_diag_reset();
-void probe_diag_record(uint8_t *raw, uint16_t raw_len);
-void probe_diag_report();
-
 // Liefert die aktuelle Unix-Zeit (Sekunden seit 1.1.1970 UTC), sofern per
 // NTP synchronisiert, sonst 0. Rechnet den seit der Synchronisation
 // vergangenen millis()-Versatz mit ein, ohne dafuer bei jedem Aufruf neu
@@ -6652,15 +6633,6 @@ void setup() {
 
 void loop() {
   channel = 1;
-  bool single_channel_selected = false;
-  uint8_t selected_channel = 0;
-  if (strcmp(channel_filter, "alle") != 0) {
-    uint8_t allowed_count = 0;
-    for (uint8_t c = 1; c <= 14; c++) {
-      if (is_channel_allowed(c)) { allowed_count++; selected_channel = c; }
-    }
-    single_channel_selected = (allowed_count == 1);
-  }
   
   // NEU 2.13.0: Wenn Channel-Filter aktiv, finde ersten erlaubten Kanal
   if (strcmp(channel_filter, "alle") != 0) {
@@ -6671,7 +6643,6 @@ void loop() {
   
   if (channel < 15 && menu_state != STATE_HTTP_SERVER) {
     wifi_set_channel(channel);
-    if (menu_state == STATE_FILTER_LIVE) probe_diag.loop_channel_set_calls++;
   }
   
   uint32_t channel_change_time = millis();  // Zeit des letzten Kanal-Wechsels
@@ -6690,30 +6661,6 @@ void loop() {
     // NEU: Zeit-Trigger - Verweilzeit abgelaufen
     if ((uint32_t)(millis() - channel_change_time) >= channel_dwell_ms) {
       should_hop = true;
-    }
-
-    // Filterzustand dynamisch neu erfassen: Punkt 2 kann waehrend des
-    // laufenden Loop einen temporaren Einzelkanal-Lock setzen/aufheben.
-    single_channel_selected = false;
-    selected_channel = 0;
-    if (strcmp(channel_filter, "alle") != 0) {
-      uint8_t allowed_count_now = 0;
-      for (uint8_t c = 1; c <= 14; c++) {
-        if (is_channel_allowed(c)) { allowed_count_now++; selected_channel = c; }
-      }
-      single_channel_selected = (allowed_count_now == 1);
-    }
-
-    // Ein einzelner erlaubter Kanal ist kein Hopping-Zyklus. Nur wenn der
-    // aktive Kanal tatsaechlich vom gesetzten Filter abweicht, einmal setzen.
-    if (single_channel_selected) {
-      should_hop = false;
-      if (selected_channel && channel != selected_channel) {
-        channel = selected_channel;
-        wifi_set_channel(channel);
-        if (menu_state == STATE_FILTER_LIVE) probe_diag.loop_channel_set_calls++;
-        channel_change_time = millis();
-      }
     }
     
     if (should_hop) {
@@ -6750,7 +6697,6 @@ void loop() {
       
       channel = next_channel;
       wifi_set_channel(channel);
-      if (menu_state == STATE_FILTER_LIVE) probe_diag.loop_channel_set_calls++;
       }  // Ende BUGFIX 2.30.2: menu_state != STATE_HTTP_SERVER
     }
     delay(1);  // kritisch fuer NONOS SDK! Kein delay(0)/yield()
@@ -8863,7 +8809,10 @@ void apply_live_filter(uint8_t *frame, uint16_t len, int8_t rssi, uint8_t channe
   const char *label = NULL;
   if (frame_type == 0 && frame_subtype == 8 && filter_sel_beacon) {
     match = true; label = "Beacon";
-  } else if (frame_type == 0 && frame_subtype == 4 && filter_sel_probe_req) {
+  } else if (frame_type == 0 && frame_subtype == 4 && filter_sel_probe_req &&
+             (filter_has_mac || !filter_probe_broadcast_only ||
+              (len >= 10 && ra[0] == 0xFF && ra[1] == 0xFF && ra[2] == 0xFF &&
+               ra[3] == 0xFF && ra[4] == 0xFF && ra[5] == 0xFF))) {
     match = true; label = "Probe Request";
   } else if (frame_type == 0 && frame_subtype == 5 && filter_sel_probe_resp) {
     match = true; label = "Probe Response";
@@ -8950,122 +8899,6 @@ void timing_test_process_packet(uint8_t *buf, uint16_t len)
   }
 }
 
-void probe_diag_reset()
-{
-  memset((void*)&probe_diag, 0, sizeof(probe_diag));
-  for (uint8_t c = 0; c < 15; c++) {
-    probe_diag.rssi_min_req[c] = 127;
-    probe_diag.rssi_max_req[c] = -128;
-    probe_diag.rssi_min_resp[c] = 127;
-    probe_diag.rssi_max_resp[c] = -128;
-  }
-  probe_diag_last_req_us = probe_diag_last_resp_us = 0;
-  probe_diag_last_req_seq = probe_diag_last_resp_seq = 0xFFFF;
-  memset(probe_diag_last_req_ta, 0, sizeof(probe_diag_last_req_ta));
-  memset(probe_diag_last_resp_ta, 0, sizeof(probe_diag_last_resp_ta));
-  probe_diag_reported_req = probe_diag_reported_resp = 0;
-}
-
-void probe_diag_record(uint8_t *raw, uint16_t raw_len)
-{
-  uint32_t cb_start = micros();
-  // SDK liefert RxControl (12 Byte) vor dem 802.11-Frame.
-  if (raw_len == 12) return; // SDK-RxControl ohne Frame, kein fehlerhafter Empfang
-  if (raw_len < 36) { probe_diag.short_frames++; return; }
-  struct RxControl *rx = (struct RxControl*)raw;
-  uint8_t *f = raw + 12;
-  uint16_t flen = raw_len - 12;
-  uint8_t fc0 = f[0], fc1 = f[1];
-  if (((fc0 >> 2) & 3) != 0) return; // nur Management
-  uint8_t subtype = (fc0 >> 4) & 0x0F;
-  if (subtype != 4 && subtype != 5) { probe_diag.other_mgmt++; return; }
-  if (flen < 24) { probe_diag.short_frames++; return; }
-  uint8_t ch = rx->channel;
-  if (ch > 14) ch = 0;
-  int8_t rssi = rx->rssi;
-  uint16_t seq = (uint16_t)(f[22] | ((uint16_t)f[23] << 8));
-  seq = (seq >> 4) & 0x0FFF;
-  bool retry = (fc1 & 0x08) != 0;
-  uint32_t now_us = micros();
-  if (subtype == 4) {
-    probe_diag.req++;
-    if (retry) probe_diag.req_retry++;
-    probe_diag.req_bytes += flen;
-    if (ch) {
-      probe_diag.channel_req[ch]++;
-      probe_diag.rssi_sum_req[ch] += rssi;
-      if (rssi < probe_diag.rssi_min_req[ch]) probe_diag.rssi_min_req[ch] = rssi;
-      if (rssi > probe_diag.rssi_max_req[ch]) probe_diag.rssi_max_req[ch] = rssi;
-    }
-    if (probe_diag_last_req_us) {
-      uint32_t dt = now_us - probe_diag_last_req_us;
-      if (!probe_diag.req_interval_min_us || dt < probe_diag.req_interval_min_us) probe_diag.req_interval_min_us = dt;
-      if (dt > probe_diag.req_interval_max_us) probe_diag.req_interval_max_us = dt;
-      if (dt <= 20000UL) probe_diag.req_burst20++;
-    }
-    if (seq == probe_diag_last_req_seq && !memcmp(f + 10, probe_diag_last_req_ta, 6)) probe_diag.req_same_seq++;
-    probe_diag_last_req_seq = seq;
-    memcpy(probe_diag_last_req_ta, f + 10, 6);
-    probe_diag_last_req_us = now_us;
-  } else {
-    probe_diag.resp++;
-    if (retry) probe_diag.resp_retry++;
-    probe_diag.resp_bytes += flen;
-    if (ch) {
-      probe_diag.channel_resp[ch]++;
-      probe_diag.rssi_sum_resp[ch] += rssi;
-      if (rssi < probe_diag.rssi_min_resp[ch]) probe_diag.rssi_min_resp[ch] = rssi;
-      if (rssi > probe_diag.rssi_max_resp[ch]) probe_diag.rssi_max_resp[ch] = rssi;
-    }
-    if (probe_diag_last_resp_us) {
-      uint32_t dt = now_us - probe_diag_last_resp_us;
-      if (!probe_diag.resp_interval_min_us || dt < probe_diag.resp_interval_min_us) probe_diag.resp_interval_min_us = dt;
-      if (dt > probe_diag.resp_interval_max_us) probe_diag.resp_interval_max_us = dt;
-      if (dt <= 20000UL) probe_diag.resp_burst20++;
-    }
-    if (seq == probe_diag_last_resp_seq && !memcmp(f + 10, probe_diag_last_resp_ta, 6)) probe_diag.resp_same_seq++;
-    probe_diag_last_resp_seq = seq;
-    memcpy(probe_diag_last_resp_ta, f + 10, 6);
-    probe_diag_last_resp_us = now_us;
-  }
-  uint32_t elapsed = micros() - cb_start;
-  probe_diag.cb_total_us += elapsed;
-  probe_diag.cb_samples++;
-  if (elapsed > probe_diag.cb_max_us) probe_diag.cb_max_us = elapsed;
-}
-
-void probe_diag_report()
-{
-  uint32_t req = probe_diag.req, resp = probe_diag.resp;
-  Serial.println(F("\r\n[Probe-Diagnose: kumulativ seit Einstieg in Filter]"));
-  Serial.printf_P(PSTR("Req=%lu (Retry %lu, gleiche TA+Seq %lu), Resp=%lu (Retry %lu, gleiche TA+Seq %lu)\r\n"),
-    (unsigned long)req, (unsigned long)probe_diag.req_retry, (unsigned long)probe_diag.req_same_seq,
-    (unsigned long)resp, (unsigned long)probe_diag.resp_retry, (unsigned long)probe_diag.resp_same_seq);
-  Serial.printf_P(PSTR("Bytes: Req %lu / Resp %lu; <=20ms Folgeabstand: Req %lu / Resp %lu\r\n"),
-    (unsigned long)probe_diag.req_bytes, (unsigned long)probe_diag.resp_bytes,
-    (unsigned long)probe_diag.req_burst20, (unsigned long)probe_diag.resp_burst20);
-  Serial.printf_P(PSTR("Intervall us: Req min/max %lu/%lu; Resp min/max %lu/%lu; Callback avg/max us %lu/%lu (%lu samples)\r\n"),
-    (unsigned long)probe_diag.req_interval_min_us, (unsigned long)probe_diag.req_interval_max_us,
-    (unsigned long)probe_diag.resp_interval_min_us, (unsigned long)probe_diag.resp_interval_max_us,
-    (unsigned long)(probe_diag.cb_samples ? probe_diag.cb_total_us / probe_diag.cb_samples : 0),
-    (unsigned long)probe_diag.cb_max_us, (unsigned long)probe_diag.cb_samples);
-  Serial.println(F("Kanal | Req count RSSI avg[min..max] | Resp count RSSI avg[min..max]"));
-  for (uint8_t c = 1; c <= 14; c++) {
-    uint32_t rq = probe_diag.channel_req[c], rs = probe_diag.channel_resp[c];
-    if (!rq && !rs) continue;
-    int avgq = rq ? (int)(probe_diag.rssi_sum_req[c] / (int32_t)rq) : 0;
-    int avgs = rs ? (int)(probe_diag.rssi_sum_resp[c] / (int32_t)rs) : 0;
-    Serial.printf_P(PSTR("Ch%2u | %lu %d[%d..%d] | %lu %d[%d..%d]\r\n"), c,
-      (unsigned long)rq, avgq, (int)probe_diag.rssi_min_req[c], (int)probe_diag.rssi_max_req[c],
-      (unsigned long)rs, avgs, (int)probe_diag.rssi_min_resp[c], (int)probe_diag.rssi_max_resp[c]);
-  }
-  Serial.printf_P(PSTR("Andere Management-Frames %lu; zu kurze RX-Frames %lu; wifi_set_channel() im Loop %lu\r\n"),
-    (unsigned long)probe_diag.other_mgmt, (unsigned long)probe_diag.short_frames,
-    (unsigned long)probe_diag.loop_channel_set_calls);
-  probe_diag_reported_req = req;
-  probe_diag_reported_resp = resp;
-}
-
 void promisc_cb(uint8_t *buf, uint16_t len)
 {
   // NEU 2.30.32: greift VOR dem online_mode-Guard - der Test soll auch dann
@@ -9074,8 +8907,6 @@ void promisc_cb(uint8_t *buf, uint16_t len)
     timing_test_process_packet(buf, len);
     return;
   }
-
-  if (menu_state == STATE_FILTER_LIVE) probe_diag_record(buf, len);
 
   if (!online_mode) return;  // Einstellungen: Offline = Listen einfrieren
 
@@ -9763,6 +9594,9 @@ void menu_enter_filter_sub_probe()
   Serial.println(F("======================================================="));
   Serial.printf_P(PSTR("  a) %s Probe Request\r\n"), chk(filter_sel_probe_req));
   Serial.printf_P(PSTR("  b) %s Probe Response\r\n"), chk(filter_sel_probe_resp));
+  if (!filter_has_mac) {
+    Serial.printf_P(PSTR("  c) %s nur Broadcast-Requests\r\n"), chk(filter_probe_broadcast_only));
+  }
   Serial.println(F("-------------------------------------------------------"));
   Serial.println(F(" Buchstabe = Haken toggeln   Backspace/ESC = zurueck"));
 }
@@ -9846,11 +9680,7 @@ void menu_enter_filter_live()
   // Einstieg setzen (nicht bei einem Refresh, z.B. durch Strg+O waehrend
   // dieser Bildschirm schon aktiv ist) - sonst wuerde der Zeitstempel bei
   // jedem Online/Offline-Umschalten wieder bei 0 anfangen.
-  if (menu_state != STATE_FILTER_LIVE) {
-    filter_live_start_ms = millis();
-    probe_diag_reset();
-    probe_diag_last_report_ms = millis();
-  }
+  if (menu_state != STATE_FILTER_LIVE) filter_live_start_ms = millis();
   menu_state = STATE_FILTER_LIVE;
 
   // NEU 2.30.29: Kanal-Lock fuer Punkt 2.1 - ist die MAC bekannt (Client
@@ -9996,7 +9826,7 @@ void menu_enter_settings()
   Serial.printf_P(PSTR(" 6) SSID-Liste zweispaltig ab: %d Eintraegen (0=aus)\r\n"), two_col_threshold_ssids);
   Serial.printf_P(PSTR(" 7) Geraeteliste zweispaltig ab: %d Geraeten (0=aus)\r\n"), two_col_threshold_devices);
   Serial.printf_P(PSTR(" 8) NTFY Benachrichtigung konfigurieren >>   [%s]\r\n"), notif_enabled ? "aktiv" : "aus");
-  Serial.printf_P(PSTR(" 9) NTP (Zeit) Konfiguration >>   [%s]\r\n"), ntp_enabled ? "aktiv" : "aus");
+  Serial.printf_P(PSTR(" 9) Zeit/NTP Konfiguration >>   [%s]\r\n"), ntp_enabled ? "aktiv" : "aus");
   Serial.printf_P(PSTR(" b) Geraetebezeichnung: %s\r\n"), device_name[0] ? device_name : "(keine)");
   Serial.printf_P(PSTR(" a) Auto-Load Datei beim Neustart: %s\r\n"), autoload_filename[0] != '\0' ? autoload_filename : "(deaktiviert)");
   // NEU 2.30.32: ADC-Einstellungen (bisher hier unter 'b') sind in die Hidden
@@ -10054,7 +9884,6 @@ void menu_enter_hidden_settings()
 #ifndef WIFI_MONITOR_DISABLE_VENDOR_LOOKUP
   Serial.printf_P(PSTR(" v) Vendor-Cache max. Eintraege: %d\r\n"), vendor_cache_max);
 #endif
-  if (!ntp_synced || manual_time_active) Serial.println(F(" m) Datum/Uhrzeit manuell setzen (nur bis Neustart)"));
   // NEU 2.30.34: passive RAM-/Stack-Diagnose
 #ifdef WIFI_MONITOR_ENABLE_RAM_ANALYSIS
   Serial.printf_P(PSTR(" r) Debug RAM Memory >>   [%s]\r\n"), ram_debug.enabled ? "Analyse EIN" : "Analyse AUS");
@@ -10083,12 +9912,10 @@ void menu_enter_apmode_settings()
   Serial.printf_P(PSTR(" 2) AP-SSID: %s\r\n"), ap_mode_ssid);
   Serial.printf_P(PSTR(" 3) AP-Passwort: %s\r\n"), ap_mode_pass[0] ? "********" : "(offen, kein Passwort)");
   Serial.println(F("-------------------------------------------------------"));
-  Serial.println(F(" Ist Punkt 1 aktiv, spannt Punkt 7 (HTTP-Datei-Server) beim"));
-  Serial.println(F(" Start ein EIGENES WLAN mit obiger SSID/obigem Passwort auf,"));
-  Serial.println(F(" statt sich (wie bisher) mit dem unter 'Benachrichtigung'"));
-  Serial.println(F(" hinterlegten WLAN zu verbinden. Praktisch, wenn gerade kein"));
-  Serial.println(F(" Router in Reichweite ist. Ein Passwort muss leer (offenes"));
-  Serial.println(F(" WLAN) oder mindestens 8 Zeichen lang sein (WPA2-Minimum)."));
+  Serial.println(F(" Wenn Punkt 1 aktiv, stellt Punkt 7 (HTTP-Datei-Server) beim"));
+  Serial.println(F(" Start ein EIGENES WLAN mit obiger SSID/Passwort bereit,"));
+  Serial.println(F(" statt sich (wie bisher) mit dem unter 'NTP' hinterlegten WLAN"));
+  Serial.println(F(" zu verbinden."));
   Serial.println(F(" Taste s = alle Einstellungen dauerhaft speichern."));
   Serial.println(F(" Backspace/ESC = zurueck zu den Einstellungen"));
 }
@@ -10333,7 +10160,7 @@ void menu_enter_ntp_settings()
   vt_clear_screen();
   OfflineBannerGuard __banner_guard;  // NEU 2.30.32: Banner (OFFLINE/Channel-Warnung) wird erst beim Verlassen dieser Funktion ausgegeben (RAII) -> steht damit immer ganz unten
   Serial.println(F("======================================================="));
-  Serial.println(F(" Einstellungen > NTP-Zeitsynchronisation"));
+  Serial.println(F(" Einstellungen > Zeit/NTP-Konfiguration"));
   Serial.println(F("======================================================="));
   Serial.printf_P(PSTR(" 1) Aktiv: %s\r\n"), ntp_enabled ? "An" : "Aus");
   Serial.printf_P(PSTR(" 2) WLAN-SSID (fuer NTP): %s\r\n"), ntp_wifi_ssid[0] ? ntp_wifi_ssid : "(nicht gesetzt)");
@@ -10345,13 +10172,16 @@ void menu_enter_ntp_settings()
   Serial.printf_P(PSTR(" 5) Zeitzone (UTC-Offset): %+d Stunde(n)\r\n"), ntp_timezone_hours);
   Serial.printf_P(PSTR(" 6) Daylight Saving Time (Sommer-/Winterzeit): %s\r\n"),
                  dst_enabled ? "An" : "Aus");
+  if (!ntp_synced || manual_time_active) {
+    Serial.println(F(" m) Datum/Uhrzeit manuell setzen (nur bis Neustart)"));
+  }
   Serial.println(F("-------------------------------------------------------"));
   if (ntp_synced) {
     time_t now = current_unix_time_with_tz();
     Serial.printf_P(PSTR(" Aktuelle Zeit (%s): %s"), manual_time_active ? "manuell gesetzt" : "NTP-synchronisiert", ctime(&now));
   } else {
     Serial.println(F(" Noch keine gueltige Zeitbasis gesetzt."));
-    Serial.println(F(" NTP-Synchronisation erfolgt beim naechsten Neustart, sofern aktiviert."));
+    Serial.println(F(" NTP-Synchronisation erfolgt beim Neustart oder beim Start des HTTP-Servers im Station Mode, sofern aktiviert."));
   }
   Serial.println(F("-------------------------------------------------------"));
 //  Serial.println(F(" Taste 1/6 = umschalten, 2/3/4/5 = Wert eingeben."));
@@ -11464,11 +11294,14 @@ void menu_enter_info()
     } else {
       Serial.printf_P(PSTR("  Synchronisiert (Server: %s)\r\n"), ntp_server);
       time_t sync_utc = ntp_epoch_at_sync;
+      bool sync_dst_active = dst_enabled && eu_dst_active(sync_utc);
+      time_t sync_local = sync_utc + (time_t)ntp_timezone_hours * 3600 + (sync_dst_active ? 3600 : 0);
       struct tm sync_tm;
-      gmtime_r(&sync_utc, &sync_tm);
+      gmtime_r(&sync_local, &sync_tm);
       static const char *eng_wdays[] = {"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"};
       static const char *eng_months[] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
-      Serial.printf_P(PSTR("  Letzte Aktualisierung: %s %s %2d %02d:%02d:%02d\r\n"),
+      Serial.printf_P(PSTR("  Letzte Aktualisierung (Ortszeit UTC%+d%s): %s %s %2d %02d:%02d:%02d\r\n"),
+                      ntp_timezone_hours, sync_dst_active ? "+1 DST" : "",
                       eng_wdays[sync_tm.tm_wday], eng_months[sync_tm.tm_mon], sync_tm.tm_mday,
                       sync_tm.tm_hour, sync_tm.tm_min, sync_tm.tm_sec);
     }
@@ -17432,6 +17265,11 @@ void menu_enter_http_server()
     }
 
     g_http_server_is_ap = false;
+    // Bei einem Laufzeitstart des HTTP-Servers im Station Mode NTP einmal
+    // ueber genau diese bestehende WLAN-Verbindung synchronisieren. Die
+    // Funktion darf WiFi.mode()/WiFi.disconnect() nicht aufrufen, sonst
+    // wuerde der eben verbundene HTTP-Server seine Verbindung verlieren.
+    if (ntp_enabled) sync_ntp_time_on_connected_wifi();
     Serial.println(F(" Verbunden. Server laeuft:"));
     Serial.print(F("   http://"));
     Serial.println(WiFi.localIP());
@@ -17498,6 +17336,56 @@ void http_server_stop()
 
   menu_state = STATE_MENU;
   menu_draw();
+}
+
+// HTTP-Datei-Server im Station Mode: Die WLAN-Verbindung steht bereits.
+// configTime() stoesst eine NTP-Abfrage an, ohne WLAN-Modus/Verbindung oder
+// den laufenden HTTP-Server zu trennen. Die Zeitbasis wird nach einer kurzen
+// Wartephase neu uebernommen, damit die Infoseite einen frischen Sync-Zeitpunkt
+// ausweist. Maximal 10 s warten; bei ungueltiger Systemzeit bleibt der bisherige
+// Synchronisationsstatus unveraendert.
+bool sync_ntp_time_on_connected_wifi()
+{
+  if (!ntp_enabled || ntp_wifi_ssid[0] == '\0' || WiFi.status() != WL_CONNECTED) {
+    Serial.println(F(" NTP: keine Synchronisierung (NTP aus oder WLAN nicht verbunden)."));
+    return false;
+  }
+
+  ram_debug_sample(RDP_NETWORK);
+  CallChainGuard __cc_guard(RDP_NETWORK);
+  Serial.println(F(" NTP: Synchronisierung ueber bestehende WLAN-Verbindung ..."));
+  configTime(0, 0, ntp_server);  // Systemzeit immer als UTC beziehen
+
+  // configTime startet den SNTP-Client. Eine kurze Wartezeit ermoeglicht
+  // die erste Antwort, ohne die bereits bestehende STA-Verbindung zu stoeren.
+  uint32_t wait_start = millis();
+  while (millis() - wait_start < 2000) {
+    delay(100);
+    yield();
+  }
+
+  time_t now = time(nullptr);
+  if (now <= 1577836800) {
+    uint32_t sync_start = millis();
+    while (millis() - sync_start < 8000) {
+      now = time(nullptr);
+      if (now > 1577836800) break;
+      delay(200);
+      yield();
+    }
+  }
+
+  if (now <= 1577836800) {
+    Serial.println(F(" NTP: Synchronisierung fehlgeschlagen; bisherige Zeitbasis bleibt erhalten."));
+    return false;
+  }
+
+  ntp_epoch_at_sync = now;
+  millis_at_ntp_sync = millis();
+  ntp_synced = true;
+  manual_time_active = false;
+  Serial.printf_P(PSTR(" NTP: Zeitbasis aktualisiert (%s Server): %s"), ntp_server, ctime(&now));
+  return true;
 }
 
 // Wird bei Bedarf zurueck zum jeweils vorherigen Menue-Zustand aufgerufen
@@ -17595,7 +17483,7 @@ void menu_go_back()
       // ADC-Einstellungen statt (wie sonst bei diesem geteilten Text-Edit-
       // State) zu den NTP-Einstellungen.
       if (ntp_edit_target == 11) menu_enter_adc_settings();
-      else if (ntp_edit_target == 14) menu_enter_hidden_settings();
+      else if (ntp_edit_target == 14) menu_enter_ntp_settings();
       else if (ntp_edit_target == 15) menu_enter_settings();
       else menu_enter_ntp_settings();
       break;
@@ -17763,14 +17651,6 @@ void menu_periodic()
       menu_enter_ssid_select();
     }
   }
-  // Diagnose Probe Request/Response Empfang im Live-Filter. Bericht alle
-  // 10 Sekunden im Hauptloop; im SDK-RX-Callback wird nicht serialisiert.
-  if (menu_state == STATE_FILTER_LIVE &&
-      (uint32_t)(millis() - probe_diag_last_report_ms) >= 10000UL) {
-    probe_diag_report();
-    probe_diag_last_report_ms = millis();
-  }
-
   if (menu_state == STATE_TRAFFIC_STATS && online_mode) {
     if (millis() - traffic_stats_last_refresh >= TRAFFIC_STATS_REFRESH_SEC * 1000UL) {
       traffic_stats_redraw();
@@ -18956,6 +18836,15 @@ void menu_handle_serial()
           dst_enabled = !dst_enabled;
           save_single_setting("dst_enabled", dst_enabled ? 1 : 0);
           menu_enter_ntp_settings();
+        } else if ((c == 'm' || c == 'M') && (!ntp_synced || manual_time_active)) {
+          menu_state = STATE_NTP_TEXT_EDIT;
+          ntp_text_edit_len = 0;
+          ntp_text_edit_buf[0] = '\0';
+          ntp_edit_target = 14;
+          Serial.println(F("\r\nDatum und lokale Uhrzeit als 14 Ziffern eingeben: YYYYMMDDHHMMSS"));
+          Serial.println(F("Beispiel: 20261013153000 fuer 13.10.2026 15:30:00"));
+          Serial.println(F("Diese Zeit gilt nur bis zum naechsten Neustart."));
+          Serial.print(F(" > "));
         } else if (c == 's') {
           save_all_settings();
         }
@@ -19190,7 +19079,7 @@ void menu_handle_serial()
                 ntp_synced = true;
                 manual_time_active = true;
                 Serial.println(F(" Manuelle Zeit gesetzt (nicht gespeichert; Neustart setzt sie zurueck)."));
-                menu_enter_hidden_settings();
+                menu_enter_ntp_settings();
               }
             }
           } else if (ntp_edit_target == 13) {
@@ -19365,15 +19254,6 @@ void menu_handle_serial()
           ntp_text_edit_buf[0] = '\0';
           ntp_edit_target = 12;
 #endif
-        } else if ((c == 'm' || c == 'M') && (!ntp_synced || manual_time_active)) {
-          menu_state = STATE_NTP_TEXT_EDIT;
-          ntp_text_edit_len = 0;
-          ntp_text_edit_buf[0] = '\0';
-          ntp_edit_target = 14;
-          Serial.println(F("\r\nDatum und lokale Uhrzeit als 14 Ziffern eingeben: YYYYMMDDHHMMSS"));
-          Serial.println(F("Beispiel: 20261013153000 fuer 13.10.2026 15:30:00"));
-          Serial.println(F("Diese Zeit gilt nur bis zum naechsten Neustart."));
-          Serial.print(F(" > "));
         } else if (c == 'd' || c == 'D') {
           // NEU 2.30.32: Taste d: ADC-Einstellungen (Akkuspannung) - bisher
           // unter 'b' in den normalen Einstellungen, jetzt hierher verschoben
@@ -19866,6 +19746,9 @@ void menu_handle_serial()
           menu_enter_filter_sub_probe();
         } else if (c == 'b') {
           filter_sel_probe_resp = !filter_sel_probe_resp;
+          menu_enter_filter_sub_probe();
+        } else if (c == 'c' && !filter_has_mac) {
+          filter_probe_broadcast_only = !filter_probe_broadcast_only;
           menu_enter_filter_sub_probe();
         }
         break;
