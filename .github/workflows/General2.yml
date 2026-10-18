@@ -236,37 +236,3 @@ jobs:
           echo "Ziel-Release: $TARGET_TAG"
           gh release upload "$TARGET_TAG" "$BIN_FILE" --repo "$REPOSITORY" --clobber
           echo "Firmware erfolgreich zum Release hochgeladen."
-W_BSS=$(section_bytes .bss); NEW_IROM=$(section_bytes .irom0.text); NEW_BIN=$(stat -c '%s' "$BIN_PATH")
-            if [[ "$NEW_BIN" == "$BIN_BYTES" && "$NEW_IRAM" == "$IRAM_BYTES" && "$NEW_DATA" == "$DATA_BYTES" && "$NEW_RODATA" == "$RODATA_BYTES" && "$NEW_BSS" == "$BSS_BYTES" && "$NEW_IROM" == "$IROM_BYTES" ]]; then break; fi
-            BIN_BYTES=$NEW_BIN; IRAM_BYTES=$NEW_IRAM; DATA_BYTES=$NEW_DATA; RODATA_BYTES=$NEW_RODATA; BSS_BYTES=$NEW_BSS; IROM_BYTES=$NEW_IROM
-            write_metrics_header
-            [[ "$PASS" != 4 ]] || { echo "::error::Messwerte stabilisierten sich nach vier Durchlaeufen nicht."; exit 1; }
-          done
-          BIN="firmware/WiFi-Monitor_v${VERSION}_${BOARD_NAME}.bin"
-          mv firmware/arduino.ino.bin "$BIN"
-          test -s "$BIN"
-          echo "Finale Firmware und Messwerte:"; ls -lh "$BIN"; cat build-src/arduino/build_metrics.h
-          echo "bin_file=$BIN" >> "$GITHUB_OUTPUT"
-          echo "board_name=$BOARD_NAME" >> "$GITHUB_OUTPUT"
-
-      - name: Upload firmware to release
-        shell: bash
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          BIN_FILE: ${{ steps.compile.outputs.bin_file }}
-          EVENT_NAME: ${{ github.event_name }}
-          RELEASE_TAG: ${{ github.event.release.tag_name }}
-          REPOSITORY: ${{ github.repository }}
-        run: |
-          set -euo pipefail
-          [[ -n "${BIN_FILE:-}" ]] || { echo "::error::Kein BIN-Dateiname ausgegeben."; exit 1; }
-          [[ -s "$BIN_FILE" ]] || { echo "::error::Firmware fehlt oder ist leer: $BIN_FILE"; exit 1; }
-          if [[ "$EVENT_NAME" == release ]]; then
-            TARGET_TAG="$RELEASE_TAG"
-          else
-            TARGET_TAG=$(gh release list --repo "$REPOSITORY" --limit 100 --json tagName,isDraft,isPrerelease,publishedAt --jq '[.[] | select(.isDraft == false and .isPrerelease == false)] | sort_by(.publishedAt) | last | .tagName // empty')
-            [[ -n "$TARGET_TAG" ]] || { echo "::error::Kein veröffentlichtes stabiles Release gefunden."; exit 1; }
-          fi
-          echo "Ziel-Release: $TARGET_TAG"
-          gh release upload "$TARGET_TAG" "$BIN_FILE" --repo "$REPOSITORY" --clobber
-          echo "Firmware erfolgreich zum Release hochgeladen."
