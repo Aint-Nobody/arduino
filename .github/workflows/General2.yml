@@ -1,4 +1,4 @@
-name: General Build
+name: General Build2
 
 on:
   workflow_dispatch:
