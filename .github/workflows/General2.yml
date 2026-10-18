@@ -1,4 +1,4 @@
-name: General Build2
+name: General Build3
 
 on:
   workflow_dispatch:
@@ -21,40 +21,42 @@ permissions:
   contents: write
 
 jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    steps:
+      - name: Build selected matrix
+        id: set-matrix
+        shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          SELECTED_BOARD: ${{ github.event.inputs.board }}
+        run: |
+          set -euo pipefail
+          ALL='[
+            {"build_id":"ESP8266-4M2M-Core-3.1.2","fqbn":"esp8266:esp8266:generic:eesz=4M2M","core_version":"3.1.2","flash_test":""},
+            {"build_id":"ESP8266-4M1M-Core-3.1.2","fqbn":"esp8266:esp8266:generic:eesz=4M1M","core_version":"3.1.2","flash_test":""},
+            {"build_id":"ESP8266-1M512-Core-3.1.2","fqbn":"esp8266:esp8266:generic:eesz=1M512","core_version":"3.1.2","flash_test":""},
+            {"build_id":"ESP8285-1M512-Core-3.1.2","fqbn":"esp8266:esp8266:esp8285:eesz=1M512","core_version":"3.1.2","flash_test":""},
+            {"build_id":"TEST-2M1M-Core-3.1.2","fqbn":"esp8266:esp8266:generic:eesz=4M1M","core_version":"3.1.2","flash_test":"2M1M"},
+            {"build_id":"TEST-2M1M-Core-2.7.4","fqbn":"esp8266:esp8266:generic:eesz=4M1M","core_version":"2.7.4","flash_test":"2M1M"}
+          ]'
+          if [[ "$EVENT_NAME" == "workflow_dispatch" ]]; then
+            MATRIX="$(jq -c --arg selected "$SELECTED_BOARD" '[.[] | select(.build_id == $selected)]' <<< "$ALL")"
+            [[ "$MATRIX" != '[]' ]] || { echo "::error::Unbekannte Auswahl: $SELECTED_BOARD"; exit 1; }
+          else
+            MATRIX="$(jq -c '.' <<< "$ALL")"
+          fi
+          echo "matrix=$MATRIX" >> "$GITHUB_OUTPUT"
+
   build:
+    needs: prepare
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - build_id: 'ESP8266-4M2M-Core-3.1.2'
-            fqbn: 'esp8266:esp8266:generic:eesz=4M2M'
-            core_version: '3.1.2'
-            flash_test: ''
-          - build_id: 'ESP8266-4M1M-Core-3.1.2'
-            fqbn: 'esp8266:esp8266:generic:eesz=4M1M'
-            core_version: '3.1.2'
-            flash_test: ''
-          - build_id: 'ESP8266-1M512-Core-3.1.2'
-            fqbn: 'esp8266:esp8266:generic:eesz=1M512'
-            core_version: '3.1.2'
-            flash_test: ''
-          - build_id: 'ESP8285-1M512-Core-3.1.2'
-            fqbn: 'esp8266:esp8266:esp8285:eesz=1M512'
-            core_version: '3.1.2'
-            flash_test: ''
-          # Test 1: Core 3.1.2 mit 2M1M-Linker-Skript
-          - build_id: 'TEST-2M1M-Core-3.1.2'
-            fqbn: 'esp8266:esp8266:generic:eesz=4M1M'
-            core_version: '3.1.2'
-            flash_test: '2M1M'
-          # Test 2: Core 2.7.4 mit 2M1M-Linker-Skript
-          - build_id: 'TEST-2M1M-Core-2.7.4'
-            fqbn: 'esp8266:esp8266:generic:eesz=4M1M'
-            core_version: '2.7.4'
-            flash_test: '2M1M'
-
-    if: github.event_name != 'workflow_dispatch' || matrix.build_id == github.event.inputs.board
+        include: ${{ fromJSON(needs.prepare.outputs.matrix) }}
 
     steps:
       - name: Checkout repository
@@ -236,3 +238,4 @@ jobs:
           echo "Ziel-Release: $TARGET_TAG"
           gh release upload "$TARGET_TAG" "$BIN_FILE" --repo "$REPOSITORY" --clobber
           echo "Firmware erfolgreich zum Release hochgeladen."
+          
