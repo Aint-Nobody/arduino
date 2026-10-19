@@ -1,4 +1,4 @@
-// Version: 261019c | INO erstellt: 2026-10-19 17:07:09 MESZ
+// Version: 261019c | INO erstellt: 2026-10-19 17:18:05 MESZ
 // AENDERUNG 261019c:
 // - Hidden Settings: Schalt-/Signalausgaenge als eigenes Untermenue; Status-LED
 //   und Signalisierungspin dort zusammengefasst. Fuenf persistent konfigurierbare
@@ -5275,9 +5275,9 @@ extern uint32_t millis_at_ntp_sync;
 //                        Taste r nur in Hintergrundverkehr entfernt;
 //                        FrameTrap-Hinweis gekuerzt; Dateilisten und
 //                        Schutzliste auf 32 Eintraege erweitert.)
-#define FIRMWARE_VERSION "261019b"
+#define FIRMWARE_VERSION "261019c"
 #ifndef FIRMWARE_BUILD_DATE
-#define FIRMWARE_BUILD_DATE "2026-10-19 11:50:53 MESZ"
+#define FIRMWARE_BUILD_DATE "2026-10-19 17:18:05 MESZ"
 #endif
 
 // Vom GitHub-Build-Workflow aus dem tatsaechlichen Linker-Output und der
