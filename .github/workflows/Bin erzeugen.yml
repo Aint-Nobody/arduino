@@ -1,4 +1,4 @@
-name: Bin erzeugen 
+name: Bin erzeugen
 
 on:
   workflow_dispatch:
@@ -8,13 +8,10 @@ on:
         required: true
         type: choice
         options:
-          - 'ESP8266-4M2M-Core-3.1.2'
-          - 'ESP8266-8M6M-Core-3.1.2'
-          - 'ESP8266-4M1M-Core-3.1.2'
-          - 'ESP8266-1M512-Core-3.1.2'
-          - 'ESP8285-1M512-Core-3.1.2'
-          - 'TEST-2M1M-Core-3.1.2'
-          - 'TEST-2M1M-Core-2.7.4'
+          - 'ESP8266-4M2M'
+          - 'ESP8266-2M1M'
+          - 'ESP8266-1M512'
+          - 'ESP8266-8M6M'
   release:
     types: [published]
 
@@ -36,13 +33,10 @@ jobs:
         run: |
           set -euo pipefail
           ALL='[
-            {"build_id":"ESP8266-4M2M-Core-3.1.2","fqbn":"esp8266:esp8266:generic:eesz=4M2M","core_version":"3.1.2","flash_test":""},
-            {"build_id":"ESP8266-8M6M-Core-3.1.2","fqbn":"esp8266:esp8266:generic:eesz=8M6M","core_version":"3.1.2","flash_test":""},
-            {"build_id":"ESP8266-4M1M-Core-3.1.2","fqbn":"esp8266:esp8266:generic:eesz=4M1M","core_version":"3.1.2","flash_test":""},
-            {"build_id":"ESP8266-1M512-Core-3.1.2","fqbn":"esp8266:esp8266:generic:eesz=1M512","core_version":"3.1.2","flash_test":""},
-            {"build_id":"ESP8285-1M512-Core-3.1.2","fqbn":"esp8266:esp8266:esp8285:eesz=1M512","core_version":"3.1.2","flash_test":""},
-            {"build_id":"TEST-2M1M-Core-3.1.2","fqbn":"esp8266:esp8266:generic:eesz=4M1M","core_version":"3.1.2","flash_test":"2M1M"},
-            {"build_id":"TEST-2M1M-Core-2.7.4","fqbn":"esp8266:esp8266:generic:eesz=4M1M","core_version":"2.7.4","flash_test":"2M1M"}
+            {"build_id":"ESP8266-4M2M","fqbn":"esp8266:esp8266:generic:eesz=4M2M","core_version":"3.1.2","flash_test":""},
+            {"build_id":"ESP8266-2M1M","fqbn":"esp8266:esp8266:generic:eesz=4M1M","core_version":"3.1.2","flash_test":"2M1M"},
+            {"build_id":"ESP8266-1M512","fqbn":"esp8266:esp8266:generic:eesz=1M512","core_version":"3.1.2","flash_test":""},
+            {"build_id":"ESP8266-8M6M","fqbn":"esp8266:esp8266:generic:eesz=8M6M","core_version":"3.1.2","flash_test":""}
           ]'
           if [[ "$EVENT_NAME" == "workflow_dispatch" ]]; then
             MATRIX="$(jq -c --arg selected "$SELECTED_BOARD" '[.[] | select(.build_id == $selected)]' <<< "$ALL")"
@@ -69,7 +63,7 @@ jobs:
       - name: Install Arduino-cli and ESP8266 core
         shell: bash
         env:
-          CORE_VERSION: ${{ matrix.core_version }}
+          CORE_VERSION: '3.1.2'
         run: |
           set -euo pipefail
           wget -O arduino-cli.deb https://github.com/arduino/arduino-cli/releases/download/v1.5.1/arduino-cli_1.5.1-1_amd64.deb
@@ -132,7 +126,6 @@ jobs:
         shell: bash
         env:
           FQBN: ${{ matrix.fqbn }}
-          CORE_VERSION: ${{ matrix.core_version }}
           FLASH_TEST: ${{ matrix.flash_test }}
         run: |
           set -euo pipefail
@@ -142,20 +135,19 @@ jobs:
           [[ "$BUILD_TZ_ABBR" == CEST ]] && BUILD_TZ_LABEL=MESZ || BUILD_TZ_LABEL=MEZ
           BUILD_TIMESTAMP="$BUILD_LOCAL $BUILD_TZ_LABEL"
           case "$FQBN" in
-            esp8266:esp8266:esp8285:eesz=1M512) BOARD_NAME=ESP8285-1M512; BUILD_FLAGS='-DWIFI_MONITOR_SMALL_FLASH -DWIFI_MONITOR_DISABLE_RAM_ANALYSIS'; LINKER_PATTERN=eagle.flash.1m512.ld ;;
-            esp8266:esp8266:generic:eesz=1M512) BOARD_NAME=ESP8266-1M512; BUILD_FLAGS='-DWIFI_MONITOR_SMALL_FLASH -DWIFI_MONITOR_DISABLE_RAM_ANALYSIS'; LINKER_PATTERN=eagle.flash.1m512.ld ;;
-            esp8266:esp8266:generic:eesz=4M1M) BOARD_NAME=ESP8266-4M1M; BUILD_FLAGS='-DWIFI_MONITOR_DISABLE_RAM_ANALYSIS'; LINKER_PATTERN=eagle.flash.4m1m.ld ;;
-            esp8266:esp8266:generic:eesz=4M2M) BOARD_NAME=ESP8266-4M2M; BUILD_FLAGS='-DWIFI_MONITOR_ENABLE_RAM_ANALYSIS'; LINKER_PATTERN=eagle.flash.4m2m.ld ;;
-            esp8266:esp8266:generic:eesz=8M6M) BOARD_NAME=ESP8266-8M6M; BUILD_FLAGS='-DWIFI_MONITOR_ENABLE_RAM_ANALYSIS'; LINKER_PATTERN=eagle.flash.8m6m.ld ;;
+            esp8266:esp8266:generic:eesz=1M512) BOARD_NAME=1M512; BUILD_FLAGS='-DWIFI_MONITOR_SMALL_FLASH -DWIFI_MONITOR_DISABLE_RAM_ANALYSIS'; LINKER_PATTERN=eagle.flash.1m512.ld ;;
+            esp8266:esp8266:generic:eesz=4M1M) BOARD_NAME=4M1M; BUILD_FLAGS='-DWIFI_MONITOR_DISABLE_RAM_ANALYSIS'; LINKER_PATTERN=eagle.flash.4m1m.ld ;;
+            esp8266:esp8266:generic:eesz=4M2M) BOARD_NAME=4M2M; BUILD_FLAGS='-DWIFI_MONITOR_ENABLE_RAM_ANALYSIS'; LINKER_PATTERN=eagle.flash.4m2m.ld ;;
+            esp8266:esp8266:generic:eesz=8M6M) BOARD_NAME=8M6M; BUILD_FLAGS='-DWIFI_MONITOR_ENABLE_RAM_ANALYSIS'; LINKER_PATTERN=eagle.flash.8m6m.ld ;;
             *) echo "::error::Unbekannte Board-Konfiguration: $FQBN"; exit 1 ;;
           esac
           if [[ "$FLASH_TEST" == 2M1M ]]; then
             LINKER_PATTERN=eagle.flash.2m1m.ld
-            BOARD_NAME="ESP8266-2M1M-Core-${CORE_VERSION}"
+            BOARD_NAME=2M1M
             BUILD_FLAGS='-DWIFI_MONITOR_DISABLE_RAM_ANALYSIS'
           fi
           LINKER_SCRIPT=$(find "$HOME/.arduino15/packages/esp8266" -type f -name "$LINKER_PATTERN" -print -quit)
-          [[ -n "$LINKER_SCRIPT" ]] || { echo "::error::Linker-Skript $LINKER_PATTERN nicht gefunden (Core $CORE_VERSION)."; exit 1; }
+          [[ -n "$LINKER_SCRIPT" ]] || { echo "::error::Linker-Skript $LINKER_PATTERN nicht gefunden (Core 3.1.2)."; exit 1; }
           IROM_LEN_HEX=$(grep -E 'irom0_0_seg[[:space:]]*:' "$LINKER_SCRIPT" | sed -n 's/.*len[[:space:]]*=[[:space:]]*0x\([0-9A-Fa-f][0-9A-Fa-f]*\).*/\1/p' | head -n 1)
           [[ -n "$IROM_LEN_HEX" ]] || { echo "::error::IROM-Laenge nicht lesbar."; exit 1; }
           IROM_CAPACITY=$((16#$IROM_LEN_HEX))
@@ -236,7 +228,7 @@ jobs:
             TARGET_TAG="$RELEASE_TAG"
           else
             TARGET_TAG=$(gh release list --repo "$REPOSITORY" --limit 100 --json tagName,isDraft,isPrerelease,publishedAt --jq '[.[] | select(.isDraft == false and .isPrerelease == false)] | sort_by(.publishedAt) | last | .tagName // empty')
-            [[ -n "$TARGET_TAG" ]] || { echo "::error::Kein veröffentlichtes stabiles Release gefunden."; exit 1; }
+            [[ -n "$TARGET_TAG" ]] || { echo "::error::Kein veroeffentlichtes stabiles Release gefunden."; exit 1; }
           fi
           echo "Ziel-Release: $TARGET_TAG"
           gh release upload "$TARGET_TAG" "$BIN_FILE" --repo "$REPOSITORY" --clobber
