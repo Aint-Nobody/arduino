@@ -1,4 +1,4 @@
-name: General Build4
+name: Bin erzeugen 
 
 on:
   workflow_dispatch:
