@@ -1,4 +1,4 @@
-# ESP8266 WIFI-MONITOR
+# ESP8266 WIFI MAC MONITOR
 
 Look at ALL WiFi MAC Adresses around you.
 Collect and analyse them in all way you can imagine.
