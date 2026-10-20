@@ -27,6 +27,7 @@ than main menu >7
 There are many functions build in,
 read the descriptions on top or bottom of each menu.
 Ctrl+o toggle between online/offline mode.
+(stopped screen refresh and scanning)
 There is also a hidden menu for system
 preferences/functions. (main menu >e>E)
 Central function is main menu >3
