@@ -10,6 +10,7 @@ Use newest .ino or
 ready made build .bin in assets.
 ...4M2M.bin for 4MB device like D1Mini.
 ...1M512.bin for 1MB devices like ESP-01.
+In 1MB variant not all functions are included because of the space in flash.(e.g. Vendor lookup, OTA ect.)
 Use a Terminal that supports esc commands.
 
 (For devices with flash >1MB)
