@@ -6,7 +6,10 @@ Collect and analyse them in all way you can imagine.
 The UI is nearly only UART based.
 But for some reasons also a HTTP Server is include.
 >
+Use newest .ino or 
+ready made build .bin in assets.
+...4M2M.bin for 4Mb device like D1Mini
+
 > Sorry for all UI Text is German.
 > Google translate is your friend 😜
->
-> 
+
