@@ -1,6 +1,6 @@
 # ESP8266 WIFI-MONITOR
 
-Look at ALL MAC Adresses around you.
+Look at ALL WiFi MAC Adresses around you.
 Collect and analyse them in all way you can imagine.
 > 
 The UI is nearly only UART based.
@@ -9,6 +9,7 @@ But for some reasons also a HTTP Server is include.
 Use newest .ino or 
 ready made build .bin in assets.
 ...4M2M.bin for 4Mb device like D1Mini
+Use a Terminal that supports esc command.
 
 > Sorry for all UI Text is German.
 > Google translate is your friend 😜
