@@ -18,7 +18,7 @@ For offline MAC Vendor lookup function,
 extract all files from Flash.Basis.fur.MAC.Vendor.zip.
 Put all files into the littleFS using the build in http server.
 Before you can use http service you need to config your wifi access credentials.
-Follow main menu >e>9 (zeit/ntp) >2+3
+Follow main menu >e>9 (zeit/ntp) >2+3. 
 ESC always jump back to main menu.
 Then main menu >7
 Or for a own AP, main menu >e>c>2+3 
