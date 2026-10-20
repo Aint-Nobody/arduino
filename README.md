@@ -4,7 +4,7 @@ Look at ALL WiFi MAC Adresses around you.
 Collect and analyse them in all way you can imagine.
 > 
 The UI is nearly only UART based.
-But for some reasons also a HTTP Server is include.
+But for some functions there is also a HTTP Server build in.
 >
 Use newest .ino or 
 ready made build .bin in assets.
