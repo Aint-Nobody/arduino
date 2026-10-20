@@ -12,4 +12,7 @@ ready made build .bin in assets.
 
 > Sorry for all UI Text is German.
 > Google translate is your friend 😜
+>
+<img width="540" height="390" alt="hlogo" src="https://github.com/user-attachments/assets/c47242de-a210-43ce-8301-8964f8f21ae2" />
+
 
