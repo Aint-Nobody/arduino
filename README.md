@@ -8,7 +8,8 @@ But for some reasons also a HTTP Server is include.
 >
 Use newest .ino or 
 ready made build .bin in assets.
-...4M2M.bin for 4Mb device like D1Mini
+...4M2M.bin for 4MB device like D1Mini.
+...1M512.bin for 1MB devices like ESP-01.
 Use a Terminal that supports esc command.
 
 For local MAC Vendor lookup function,
