@@ -29,6 +29,10 @@ read the descriptions on top of each menu.
 There is also a hidden menu for system
 preferences/functions. (main menu >e>E)
 
+The project is still under construction.
+Firmware is beta and sometimes a bit confuse in menu structures this time.
+A description over all is at work 😉
+
 > Sorry for all UI Text is German.
 > Google translate is your friend 😜
 >
