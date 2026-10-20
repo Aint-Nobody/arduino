@@ -12,16 +12,22 @@ ready made build .bin in assets.
 ...1M512.bin for 1MB devices like ESP-01.
 Use a Terminal that supports esc command.
 
+(For devices with flash >1MB)
 For local MAC Vendor lookup function,
-extract all files from Flash.Basis.fur.MAC.Vendor.zip
-into the littleFS using the build in http server.
+extract all files from Flash.Basis.fur.MAC.Vendor.zip.
+Put all files into the littleFS using the build in http server.
 Before you have to config your wifi access credentials.(Menu >e>9 (zeit/ntp) >2+3)
 Then main menu >7
 Or for a own AP, menu >e>c>2+3 
 than main menu >7
 ESC always jump back to main menu.
-There are many functions build in
+Ctrl+o toggle between online/offline mode.
+
+There are many functions build in,
 read the descriptions on top of each menu.
+
+There is also a hidden menu for system
+preferences/functions. (main menu >e>E)
 
 > Sorry for all UI Text is German.
 > Google translate is your friend 😜
