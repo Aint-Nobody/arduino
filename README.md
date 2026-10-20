@@ -25,7 +25,7 @@ Or for a own AP, main menu >e>c>2+3
 than main menu >7
 
 There are many functions build in,
-read the descriptions on top of each menu.
+read the descriptions on top or bottom of each menu.
 Ctrl+o toggle between online/offline mode.
 There is also a hidden menu for system
 preferences/functions. (main menu >e>E)
