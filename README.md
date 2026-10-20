@@ -14,7 +14,7 @@ In 1MB variant not all functions are included because of the space in flash.(e.g
 Use a Terminal that supports esc commands.
 
 (For devices with flash >1MB)
-For local MAC Vendor lookup function,
+For offline MAC Vendor lookup function,
 extract all files from Flash.Basis.fur.MAC.Vendor.zip.
 Put all files into the littleFS using the build in http server.
 Before you can use http service you need to config your wifi access credentials.
