@@ -16,18 +16,19 @@ Use a Terminal that supports esc commands.
 For local MAC Vendor lookup function,
 extract all files from Flash.Basis.fur.MAC.Vendor.zip.
 Put all files into the littleFS using the build in http server.
-Before you have to config your wifi access credentials.(Menu >e>9 (zeit/ntp) >2+3)
-Then main menu >7
-Or for a own AP, menu >e>c>2+3 
-than main menu >7
+Before you can use http service you need to config your wifi access credentials.
+Follow main menu >e>9 (zeit/ntp) >2+3
 ESC always jump back to main menu.
-Ctrl+o toggle between online/offline mode.
+Then main menu >7
+Or for a own AP, main menu >e>c>2+3 
+than main menu >7
 
 There are many functions build in,
 read the descriptions on top of each menu.
-
+Ctrl+o toggle between online/offline mode.
 There is also a hidden menu for system
 preferences/functions. (main menu >e>E)
+Central function is main menu >3
 
 The project is still under construction.
 Firmware is beta and sometimes a bit confuse in menu structures this time.
